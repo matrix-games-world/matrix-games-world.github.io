@@ -2545,7 +2545,7 @@ function applySiteSettings(){
     const status=document.getElementById("site-status-message");if(status){status.textContent=siteSettings.statusMessage||"";status.style.display=siteSettings.statusMessage?"block":"none";}
     const counter=document.getElementById("game-counter");if(counter)counter.style.display=siteSettings.showCounter===false?"none":"block";
     syncAuthControls();
-    document.title=BRAND_NAME;
+    document.title=(document.documentElement.lang==="en")?"Matrix Games: The World | Free Online Games":"Matrix Games: The World | ألعاب مجانية أونلاين";
     let style=document.getElementById("site-custom-style");
     if(!style){style=document.createElement("style");style.id="site-custom-style";document.head.appendChild(style);}
     applyLoadingSettings();
