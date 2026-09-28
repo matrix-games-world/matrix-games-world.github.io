@@ -1335,7 +1335,8 @@ const GAME_PLACEHOLDER_IMAGE = "data:image/svg+xml;charset=UTF-8," + encodeURICo
 function imageUrl(name){
     const item = catalog.find(x=>x.name===name);
     if(item && item.image) return item.image;
-    return GAME_PLACEHOLDER_IMAGE;
+    // اعرض بوسترًا مولدًا فورًا بدل placeholder، ثم استبدله بصورة Firestore الحقيقية عندما تصل.
+    return generatedGamePoster(name,getGameCategory(item||{name}));
 }
 
 async function loadRemoteGamePreview(name){
