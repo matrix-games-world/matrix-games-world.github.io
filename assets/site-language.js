@@ -5,7 +5,7 @@ const BRAND="Matrix Games: The World";
 const C={
  ar:{
   search:"🔍 ابحث عن لعبة أو اسم...",admin:"لوحة الأدمن ⚙️",login:"تسجيل الدخول 🎮",logout:"خروج",
-  hero:"Matrix Games: The World — ألعاب مجانية مباشرة من المتصفح.",games:"🎮 كل الألعاب",
+  hero:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.",games:"🎮 كل الألعاب",
   back:"← رجوع",save:"💾 حفظ التقدم",full:"ملء الشاشة ⛶",related:"ألعاب مشابهة",gameNow:"اللعبة الآن",details:"تفاصيل اللعبة",favorite:"المفضلة",
   loginTitle:"تسجيل دخول عالم Matrix Games: The World",loginHint:"بعد تسجيل الدخول، بعض ميزات الموقع يمكن ربطها بحسابك.",
   register:"إنشاء حساب لاعب جديد",switchIn:"تمتلك حسابًا بالفعل؟ تسجيل دخول",switchOut:"لا تملك حسابًا؟ إنشاء حساب لاعب جديد",or:"أو",
@@ -21,7 +21,7 @@ const C={
  },
  en:{
   search:"🔍 Search for a game or title...",admin:"Admin Panel ⚙️",login:"Sign in 🎮",logout:"Log out",
-  hero:"Matrix Games: The World — free games, played directly in your browser.",games:"🎮 All Games",
+  hero:"Discover 300+ free games and play directly in your browser — action, sports, puzzles, horror, adventures, and 2-player games.",games:"🎮 All Games",
   back:"← Back",save:"💾 Save Progress",full:"Fullscreen ⛶",related:"Similar Games",gameNow:"Now Playing",details:"Game Details",favorite:"Favorites",
   loginTitle:"Sign in to Matrix Games: The World",loginHint:"Signing in is optional for some site features.",
   register:"Create a player account",switchIn:"Already have an account? Sign in",switchOut:"New here? Create a player account",or:"OR",
