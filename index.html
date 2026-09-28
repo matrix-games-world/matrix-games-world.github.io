@@ -6,18 +6,28 @@
 <meta name="google-site-verification" content="puRqpt2ZTflS4Z53Dg967XOzf2edFTGH7ku7h1xf8X8">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4307246770566054"
      crossorigin="anonymous"></script>
-<meta name="description" content="Matrix Games: The World — ألعاب مجانية مباشرة من المتصفح، مع بحث وتصنيفات ومفضلة وتسجيل دخول.">
+<meta name="description" content="اكتشف أكثر من 300 لعبة مجانية على Matrix Games: The World، والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.">
 <link rel="canonical" href="https://matrix-games-world.github.io/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Matrix Games: The World">
-<meta property="og:description" content="Matrix Games: The World — free browser games.">
+<meta property="og:title" content="Matrix Games: The World | ألعاب مجانية أونلاين">
+<meta property="og:site_name" content="Matrix Games: The World">
+<meta property="og:description" content="اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح، من الأكشن والرياضة إلى الألغاز والرعب والمغامرات وألعاب اللاعبين.">
 <meta property="og:url" content="https://matrix-games-world.github.io/">
 <script src="assets/site-language.js" defer></script>
+<script id="matrix-website-schema" type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebSite",
+  "name":"Matrix Games: The World",
+  "alternateName":["Matrix Games","Matrix Games World"],
+  "url":"https://matrix-games-world.github.io/"
+}
+</script>
 <link id="favicon-png" rel="icon" type="image/png" sizes="48x48" href="assets/matrix-favicon-48.png">
 <link id="favicon-jpg" rel="icon" type="image/jpeg" href="assets/matrix-logo-192.jpg">
 <link id="favicon-shortcut" rel="shortcut icon" type="image/png" href="assets/matrix-favicon-48.png">
 <link id="favicon-apple" rel="apple-touch-icon" href="assets/matrix-logo-192.jpg">
-<title>Matrix Games: The World</title>
+<title>Matrix Games: The World | ألعاب مجانية أونلاين</title>
 
 <!-- Firebase: استبدل إعدادات المشروع في الأسفل ببيانات مشروعك -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -1284,7 +1294,7 @@ let activeGameLastSavedSignature = "";
 let siteSettings = {
     title:"Matrix Games: The World",
     heroTitle:"Matrix Games: The World",
-    heroSubtitle:"Matrix Games: The World — العب ألعابك مباشرة من مجلد offline",
+    heroSubtitle:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.",
     accentColor:"#00ff66",
     bgTop:"#060c06",
     bgBottom:"#010301",
@@ -2495,7 +2505,7 @@ async function restoreSelectedGame(){
 }
 function settingsDefaults(){return {
     title:BRAND_NAME,heroTitle:BRAND_NAME,
-    heroSubtitle:BRAND_NAME,
+    heroSubtitle:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.",
     accentColor:"#00ff66",bgTop:"#060c06",bgBottom:"#010301",
     heroLogoSize:80,showCounter:true,showLogin:true,statusMessage:"",
     loadingTitle:"جاري تحميل اللعبة",
@@ -2530,7 +2540,7 @@ function applySiteSettings(){
         else if(logo.startsWith("data:image/jpeg")||logo.endsWith(".jpg")||logo.endsWith(".jpeg")) el.type="image/jpeg";
     });
     const title=document.getElementById("hero-title");if(title)title.textContent=BRAND_NAME;
-    const subtitle=document.getElementById("hero-subtitle");if(subtitle)subtitle.textContent=BRAND_NAME;
+    const subtitle=document.getElementById("hero-subtitle");if(subtitle)subtitle.textContent=(siteSettings.heroSubtitle&&siteSettings.heroSubtitle!==BRAND_NAME)?siteSettings.heroSubtitle:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.";
     const headerTitle=document.getElementById("header-site-title");if(headerTitle)headerTitle.textContent=BRAND_NAME;
     const status=document.getElementById("site-status-message");if(status){status.textContent=siteSettings.statusMessage||"";status.style.display=siteSettings.statusMessage?"block":"none";}
     const counter=document.getElementById("game-counter");if(counter)counter.style.display=siteSettings.showCounter===false?"none":"block";
@@ -2727,7 +2737,7 @@ async function saveSiteSettings(){
         siteSettings={...settingsDefaults(),...siteSettings,
             title:BRAND_NAME,
             heroTitle:BRAND_NAME,
-            heroSubtitle:BRAND_NAME,
+            heroSubtitle:document.getElementById("site-hero-subtitle-input")?.value.trim()||"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.",
             accentColor:document.getElementById("site-accent-input")?.value||"#00ff66",
             bgTop:document.getElementById("site-bg-top-input")?.value||"#060c06",
             bgBottom:document.getElementById("site-bg-bottom-input")?.value||"#010301",
