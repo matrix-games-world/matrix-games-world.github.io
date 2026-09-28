@@ -1267,7 +1267,9 @@ const displayNames = {
 
 let catalog = [];
 let gameImageObserver = null;
-const remoteGamePreviewPromises = new Map();
+const remoteGamePreviewQueue = new Set();
+let remoteGamePreviewBatchTimer = null;
+let remoteGamePreviewBatchBusy = false;
 let currentUser = null;
 let currentProfile = null;
 let favoriteGames = new Set();
@@ -1339,36 +1341,61 @@ function imageUrl(name){
     return generatedGamePoster(name,getGameCategory(item||{name}));
 }
 
-async function loadRemoteGamePreview(name){
-    if(!db || !name)return null;
-    if(remoteGamePreviewPromises.has(name))return remoteGamePreviewPromises.get(name);
-    const promise=db.collection("games").doc(name).get().then(snap=>{
-        if(!snap.exists)return null;
-        const data=snap.data()||{};
-        const idx=catalog.findIndex(x=>x.name===name);
-        if(idx>=0)catalog[idx]={...catalog[idx],...data,id:snap.id};
-        document.querySelectorAll('[data-game-preview="'+encodeURIComponent(name)+'"]').forEach(img=>{
-            if(data.image)img.src=data.image;
-            img.dataset.loaded="1";
-            img.removeAttribute("data-game-pending");
-        });
-        return data;
-    }).catch(e=>{
-        console.warn("Lazy game preview:",name,e);
-        document.querySelectorAll('[data-game-preview="'+encodeURIComponent(name)+'"]').forEach(img=>{
-            img.dataset.loaded="1";
-            img.removeAttribute("data-game-pending");
-        });
-        return null;
+function applyRemoteGamePreview(name,data){
+    const idx=catalog.findIndex(x=>x.name===name);
+    if(idx>=0 && data)catalog[idx]={...catalog[idx],...data,id:name};
+
+    document.querySelectorAll('[data-game-preview="'+encodeURIComponent(name)+'"]').forEach(img=>{
+        if(data && data.image)img.src=data.image;
+        img.dataset.loaded="1";
+        img.removeAttribute("data-game-pending");
     });
-    remoteGamePreviewPromises.set(name,promise);
-    return promise;
+}
+
+async function flushGamePreviewQueue(){
+    if(remoteGamePreviewBatchBusy || !remoteGamePreviewQueue.size || !db)return;
+    remoteGamePreviewBatchBusy=true;
+
+    const names=[...remoteGamePreviewQueue].slice(0,10);
+    names.forEach(name=>remoteGamePreviewQueue.delete(name));
+
+    try{
+        const snap=await db.collection("games")
+            .where(firebase.firestore.FieldPath.documentId(),"in",names)
+            .get();
+
+        const found=new Map();
+        snap.forEach(doc=>found.set(doc.id,doc.data()||{}));
+
+        names.forEach(name=>applyRemoteGamePreview(name,found.get(name)||null));
+    }catch(e){
+        console.warn("Batch game previews:",e);
+        names.forEach(name=>applyRemoteGamePreview(name,null));
+    }finally{
+        remoteGamePreviewBatchBusy=false;
+        if(remoteGamePreviewQueue.size) {
+            clearTimeout(remoteGamePreviewBatchTimer);
+            remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,40);
+        }
+    }
+}
+
+function loadRemoteGamePreview(name){
+    if(!db || !name)return;
+    const selector='[data-game-preview="'+encodeURIComponent(name)+'"]';
+    const hasPending=document.querySelector(selector)?.dataset.loaded!=="1";
+    if(!hasPending)return;
+
+    remoteGamePreviewQueue.add(name);
+    clearTimeout(remoteGamePreviewBatchTimer);
+    remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,40);
 }
 
 function setupLazyGameImages(){
     if(gameImageObserver)gameImageObserver.disconnect();
     const imgs=[...document.querySelectorAll(".game-thumb[data-game-preview]")];
     if(!imgs.length || !db)return;
+
     gameImageObserver=new IntersectionObserver(entries=>{
         entries.forEach(entry=>{
             if(!entry.isIntersecting)return;
@@ -1377,8 +1404,17 @@ function setupLazyGameImages(){
             if(img.dataset.loaded==="1")return;
             loadRemoteGamePreview(decodeURIComponent(img.dataset.gamePreview||""));
         });
-    },{rootMargin:"700px 0px"});
+    },{rootMargin:"900px 0px"});
+
     imgs.forEach(img=>gameImageObserver.observe(img));
+
+    // جلب صور أول شاشة دفعة واحدة فور رسم الموقع، بدل طلب Firestore منفصل لكل لعبة.
+    const firstScreen=imgs.slice(0,24)
+        .map(img=>decodeURIComponent(img.dataset.gamePreview||""))
+        .filter(Boolean);
+    firstScreen.forEach(name=>remoteGamePreviewQueue.add(name));
+    clearTimeout(remoteGamePreviewBatchTimer);
+    remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,20);
 }
 
 /* =========================================================
