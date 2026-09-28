@@ -2098,18 +2098,29 @@ function friendlyFirebaseError(e){
 /* =========================================================
    7) المستخدم + المفضلة + آخر الألعاب
 ========================================================= */
+function syncAuthControls(){
+    const loginBtn=document.getElementById("auth-btn-trigger");
+    const logoutBtn=document.getElementById("logout-btn");
+    const userDisplay=document.getElementById("user-display");
+    const loggedIn=!!currentUser;
+
+    if(loginBtn)loginBtn.style.display=loggedIn?"none":"inline-block";
+    if(logoutBtn)logoutBtn.style.display=loggedIn?"inline-block":"none";
+    if(userDisplay)userDisplay.style.display=loggedIn?"inline-block":"none";
+}
+
 async function loadUserProfile(user){
     currentUser=user;
+    syncAuthControls();
+
     if(user){
         trackAnalytics("login",{method:user.providerData?.[0]?.providerId||"unknown"});
         trackLocalAnalytics("login");
     }
+
     if(!user){
         currentProfile=null;
         favoriteGames=new Set(getLocalFavorites());
-        document.getElementById("auth-btn-trigger").style.display="inline-block";
-        document.getElementById("logout-btn").style.display="none";
-        document.getElementById("user-display").style.display="none";
         document.getElementById("admin-panel-btn").style.display="none";
         document.getElementById("admin-panel").style.display="none";
         renderHomeSections();
@@ -2117,19 +2128,30 @@ async function loadUserProfile(user){
         return;
     }
 
-    let profile={username:user.email.split("@")[0]};
-    if(db){
-        const snap=await db.collection("users").doc(user.uid).get();
-        if(snap.exists) profile={...profile,...snap.data()};
+    const fallbackName=user.email?.split("@")[0]||user.displayName||"لاعب";
+    const userDisplay=document.getElementById("user-display");
+    if(userDisplay){
+        userDisplay.textContent="👤 "+fallbackName;
     }
+
+    let profile={username:fallbackName};
+    if(db){
+        try{
+            const snap=await db.collection("users").doc(user.uid).get();
+            if(snap.exists) profile={...profile,...snap.data()};
+        }catch(e){
+            console.warn("User profile read:",e);
+        }
+    }
+
     currentProfile=profile;
     favoriteGames=new Set(profile.favorites||getLocalFavorites());
     saveLocalFavorites();
 
-    document.getElementById("auth-btn-trigger").style.display="none";
-    document.getElementById("logout-btn").style.display="inline-block";
-    document.getElementById("user-display").style.display="inline-block";
-    document.getElementById("user-display").textContent="👤 "+(profile.username||"لاعب");
+    if(userDisplay){
+        userDisplay.style.display="inline-block";
+        userDisplay.textContent="👤 "+(profile.username||fallbackName);
+    }
 
     await checkAdmin(user.uid);
     renderHomeSections();
@@ -2512,10 +2534,7 @@ function applySiteSettings(){
     const headerTitle=document.getElementById("header-site-title");if(headerTitle)headerTitle.textContent=BRAND_NAME;
     const status=document.getElementById("site-status-message");if(status){status.textContent=siteSettings.statusMessage||"";status.style.display=siteSettings.statusMessage?"block":"none";}
     const counter=document.getElementById("game-counter");if(counter)counter.style.display=siteSettings.showCounter===false?"none":"block";
-    const authBtn=document.getElementById("auth-btn-trigger");
-    if(authBtn)authBtn.style.display=!currentUser?"inline-block":"none";
-    const logoutBtn=document.getElementById("logout-btn");
-    if(logoutBtn)logoutBtn.style.display=currentUser?"inline-block":"none";
+    syncAuthControls();
     document.title=BRAND_NAME;
     let style=document.getElementById("site-custom-style");
     if(!style){style=document.createElement("style");style.id="site-custom-style";document.head.appendChild(style);}
