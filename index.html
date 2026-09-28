@@ -2476,7 +2476,7 @@ function applySiteSettings(){
     const status=document.getElementById("site-status-message");if(status){status.textContent=siteSettings.statusMessage||"";status.style.display=siteSettings.statusMessage?"block":"none";}
     const counter=document.getElementById("game-counter");if(counter)counter.style.display=siteSettings.showCounter===false?"none":"block";
     const authBtn=document.getElementById("auth-btn-trigger");
-    if(authBtn)authBtn.style.display=(siteSettings.showLogin!==false && !currentUser)?"inline-block":"none";
+    if(authBtn)authBtn.style.display=!currentUser?"inline-block":"none";
     const logoutBtn=document.getElementById("logout-btn");
     if(logoutBtn)logoutBtn.style.display=currentUser?"inline-block":"none";
     document.title=BRAND_NAME;
