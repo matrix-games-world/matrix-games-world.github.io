@@ -1281,6 +1281,8 @@ let gameImageObserver = null;
 const remoteGamePreviewQueue = new Set();
 let remoteGamePreviewBatchTimer = null;
 let remoteGamePreviewBatchBusy = false;
+let gameImagesBackgroundReady = false;
+let gameImagesBackgroundTimer = null;
 let currentUser = null;
 let currentProfile = null;
 let favoriteGames = new Set();
@@ -1411,30 +1413,32 @@ function setupLazyGameImages(){
         entries.forEach(entry=>{
             if(!entry.isIntersecting)return;
             const img=entry.target;
+            if(!gameImagesBackgroundReady)return;
             gameImageObserver.unobserve(img);
             if(img.dataset.loaded==="1")return;
             loadRemoteGamePreview(decodeURIComponent(img.dataset.gamePreview||""));
         });
-    },{rootMargin:"900px 0px"});
+    },{rootMargin:"700px 0px"});
 
     imgs.forEach(img=>gameImageObserver.observe(img));
 
-    // اعرض الصفحة فورًا بالبوسترات المولدة، ثم اجلب الصور المخصصة بعد أول رسم.
+    // لا نبدأ أي قراءة لصور Firestore أثناء أول رسم للصفحة.
+    if(!gameImagesBackgroundReady && !gameImagesBackgroundTimer){
+        gameImagesBackgroundTimer=setTimeout(()=>{
+            gameImagesBackgroundReady=true;
+            gameImagesBackgroundTimer=null;
+            setupLazyGameImages();
+        },1200);
+        return;
+    }
+
+    // بعد أن تصبح الصفحة جاهزة، اجلب أول مجموعة من الصور على دفعات.
     const firstScreen=imgs.slice(0,12)
         .map(img=>decodeURIComponent(img.dataset.gamePreview||""))
         .filter(Boolean);
-
-    const startBackgroundImageFetch=()=>{
-        firstScreen.forEach(name=>remoteGamePreviewQueue.add(name));
-        clearTimeout(remoteGamePreviewBatchTimer);
-        remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,60);
-    };
-
-    if("requestIdleCallback" in window){
-        window.requestIdleCallback(startBackgroundImageFetch,{timeout:1200});
-    }else{
-        setTimeout(startBackgroundImageFetch,900);
-    }
+    firstScreen.forEach(name=>remoteGamePreviewQueue.add(name));
+    clearTimeout(remoteGamePreviewBatchTimer);
+    remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,60);
 }
 
 /* =========================================================
