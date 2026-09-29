@@ -1477,6 +1477,7 @@ let remoteGamePreviewBatchTimer = null;
 let remoteGamePreviewBatchBusy = false;
 let gameImagesBackgroundReady = false;
 let gameImagesBackgroundTimer = null;
+let allGameImagesPromise = null;
 let currentUser = null;
 let currentProfile = null;
 let favoriteGames = new Set();
@@ -1548,93 +1549,45 @@ function imageUrl(name){
     return generatedGamePoster(name,getGameCategory(item||{name}));
 }
 
-function applyRemoteGamePreview(name,data){
-    const idx=catalog.findIndex(x=>x.name===name);
-    if(idx>=0 && data)catalog[idx]={...catalog[idx],...data,id:name};
-
-    document.querySelectorAll('[data-game-preview="'+encodeURIComponent(name)+'"]').forEach(img=>{
-        if(data && data.image)img.src=data.image;
-        img.dataset.loaded="1";
-        img.removeAttribute("data-game-pending");
+function applyAllLoadedGameImages(){
+    document.querySelectorAll(".game-thumb[data-game-preview]").forEach(img=>{
+        const name=decodeURIComponent(img.dataset.gamePreview||"");
+        const item=catalog.find(g=>g.name===name);
+        if(item?.image){
+            img.src=item.image;
+            img.dataset.loaded="1";
+            img.removeAttribute("data-game-pending");
+        }
     });
 }
 
-async function flushGamePreviewQueue(){
-    if(remoteGamePreviewBatchBusy || !remoteGamePreviewQueue.size || !db)return;
-    remoteGamePreviewBatchBusy=true;
+async function loadAllGameImagesOnce(){
+    if(!db)return;
+    if(allGameImagesPromise)return allGameImagesPromise;
 
-    const names=[...remoteGamePreviewQueue].slice(0,10);
-    names.forEach(name=>remoteGamePreviewQueue.delete(name));
+    allGameImagesPromise=db.collection("games")
+        .where("source","==","local")
+        .get()
+        .then(snap=>{
+            snap.forEach(doc=>{
+                const data=doc.data()||{};
+                if(!data.name || !data.image)return;
+                const idx=catalog.findIndex(g=>g.name===data.name);
+                if(idx>=0)catalog[idx]={...catalog[idx],...data,id:doc.id};
+            });
+            applyAllLoadedGameImages();
+        })
+        .catch(e=>{
+            console.warn("All game images:",e);
+        });
 
-    try{
-        const snap=await db.collection("games")
-            .where(firebase.firestore.FieldPath.documentId(),"in",names)
-            .get();
-
-        const found=new Map();
-        snap.forEach(doc=>found.set(doc.id,doc.data()||{}));
-
-        names.forEach(name=>applyRemoteGamePreview(name,found.get(name)||null));
-    }catch(e){
-        console.warn("Batch game previews:",e);
-        names.forEach(name=>applyRemoteGamePreview(name,null));
-    }finally{
-        remoteGamePreviewBatchBusy=false;
-        if(remoteGamePreviewQueue.size) {
-            clearTimeout(remoteGamePreviewBatchTimer);
-            remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,40);
-        }
-    }
-}
-
-function loadRemoteGamePreview(name){
-    if(!db || !name)return;
-    const selector='[data-game-preview="'+encodeURIComponent(name)+'"]';
-    const hasPending=document.querySelector(selector)?.dataset.loaded!=="1";
-    if(!hasPending)return;
-
-    remoteGamePreviewQueue.add(name);
-    clearTimeout(remoteGamePreviewBatchTimer);
-    remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,40);
+    return allGameImagesPromise;
 }
 
 function setupLazyGameImages(){
-    if(gameImageObserver)gameImageObserver.disconnect();
-    const imgs=[...document.querySelectorAll(".game-thumb[data-game-preview]")];
-    if(!imgs.length || !db)return;
-
-    gameImageObserver=new IntersectionObserver(entries=>{
-        entries.forEach(entry=>{
-            if(!entry.isIntersecting)return;
-            const img=entry.target;
-            if(!gameImagesBackgroundReady)return;
-            gameImageObserver.unobserve(img);
-            if(img.dataset.loaded==="1")return;
-            loadRemoteGamePreview(decodeURIComponent(img.dataset.gamePreview||""));
-        });
-    },{rootMargin:"700px 0px"});
-
-    imgs.forEach(img=>gameImageObserver.observe(img));
-
-    // لا نبدأ أي قراءة لصور Firestore أثناء أول رسم للصفحة.
-    if(!gameImagesBackgroundReady && !gameImagesBackgroundTimer){
-        gameImagesBackgroundTimer=setTimeout(()=>{
-            gameImagesBackgroundReady=true;
-            gameImagesBackgroundTimer=null;
-            setupLazyGameImages();
-        },1200);
-        return;
-    }
-
-    // بعد أن تصبح الصفحة جاهزة، اجلب أول مجموعة من الصور على دفعات.
-    const firstScreen=imgs.slice(0,12)
-        .map(img=>decodeURIComponent(img.dataset.gamePreview||""))
-        .filter(Boolean);
-    firstScreen.forEach(name=>remoteGamePreviewQueue.add(name));
-    clearTimeout(remoteGamePreviewBatchTimer);
-    remoteGamePreviewBatchTimer=setTimeout(flushGamePreviewQueue,60);
+    // تم إلغاء التحميل صورة-بصورة عمدًا.
+    // كل صور الألعاب المحلية تُجلب باستعلام واحد وتظهر دفعة واحدة.
 }
-
 /* =========================================================
    4) عرض الألعاب والبحث
 ========================================================= */
@@ -1654,7 +1607,7 @@ function gameCardHtml(game){
     if(favoriteGames.has(game.name))badges.push("❤️ مفضلة");
     return `<div class="game-card" data-game="${encodeURIComponent(game.name)}" onclick="openGame(decodeURIComponent(this.dataset.game))">
         <div class="game-badges">${badges.filter(b=>b!=="❤️ مفضلة").map(b=>`<span class="game-badge">${b}</span>`).join("")}</div>
-        <img class="game-thumb" loading="lazy" decoding="async" data-game-preview="${encodeURIComponent(game.name)}" data-game-pending="${game.image?"false":"true"}" src="${img}" alt="${title}" onerror="this.onerror=null;this.src=GAME_PLACEHOLDER_IMAGE">
+        <img class="game-thumb" loading="eager" decoding="async" data-game-preview="${encodeURIComponent(game.name)}" data-game-pending="${game.image?"false":"true"}" src="${img}" alt="${title}" onerror="this.onerror=null;this.src=GAME_PLACEHOLDER_IMAGE">
         <div class="game-title-row">
             <button class="favorite-btn ${favoriteGames.has(game.name)?"active":""}" title="المفضلة" data-game="${encodeURIComponent(game.name)}" onclick="toggleFavorite(this.dataset.game,event)">★</button>
             <div class="game-title">${title}</div>
@@ -3086,6 +3039,13 @@ async function reloadGames(){
     renderHomeSections();
     renderGames();
     loadAdminDashboard();
+
+    // الصور الحقيقية تُجلب دفعة واحدة بعد ظهور الواجهة، ثم تُطبّق كلها معًا.
+    loadAllGameImagesOnce().then(()=>{
+        renderHomeSections();
+        renderGames();
+    });
+
     setTimeout(()=>loadRemoteCustomGamesInBackground(),1200);
 }
 
