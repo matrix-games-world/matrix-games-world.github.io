@@ -84,6 +84,16 @@ body{
     font-size:15px;outline:none
 }
 .auth-input:focus{border-color:#00ff66}
+.password-field{position:relative;width:100%}
+.password-field .auth-input{padding-left:48px;margin-bottom:8px}
+.password-visibility-btn{
+    position:absolute;left:9px;top:50%;transform:translateY(-50%);
+    width:34px;height:34px;border:1px solid #315b38;border-radius:8px;
+    background:#102011;color:#9fffb8;display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:17px;line-height:1;padding:0;z-index:2
+}
+.password-visibility-btn:hover{border-color:#00ff66;color:#00ff66;background:#173518}
+.password-visibility-btn:focus{outline:none;border-color:#00ff66;box-shadow:0 0 0 2px rgba(0,255,102,.15)}
 .auth-btn{
     width:100%;padding:13px;background:#00ff66;color:#000;border:none;
     border-radius:8px;font-weight:bold;cursor:pointer;font-size:16px;margin-top:8px
@@ -849,7 +859,14 @@ iframe{width:100%;height:100%;border:none}
             <h3 style="color:#00ff66;margin-top:0">تسجيل دخول عالم Matrix Games: The World</h3>
             <div style="color:#9bb39b;font-size:12px;line-height:1.6;margin-bottom:8px">بعد تسجيل الدخول، الموقع يحاول حفظ تقدم الألعاب المرتبط بحسابك تلقائيًا.</div>
             <input type="text" id="login-user" class="auth-input" placeholder="البريد الإلكتروني أو اسم المستخدم">
-            <input type="password" id="login-pass" class="auth-input" placeholder="كلمة المرور السرية">
+            <div class="password-field">
+                <input type="password" id="login-pass" class="auth-input" placeholder="كلمة المرور السرية"
+                       autocomplete="current-password"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();loginPlayer();}">
+                <button type="button" id="login-pass-toggle" class="password-visibility-btn"
+                        aria-label="إظهار كلمة المرور" title="إظهار كلمة المرور"
+                        onclick="togglePasswordVisibility('login-pass','login-pass-toggle')">👁️</button>
+            </div>
             <button class="auth-btn" onclick="loginPlayer()">دخول السيرفر 🎮</button>
             <button class="secondary-btn auth-btn" style="margin-top:8px" onclick="sendPasswordReset()">🔑 نسيت كلمة المرور؟</button>
             <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:#6f8b6f;font-size:12px">
@@ -1994,6 +2011,21 @@ async function registerPlayer(){
     }catch(e){
         console.error(e);
         authMessage("تعذر إنشاء الحساب: "+friendlyFirebaseError(e));
+    }
+}
+
+function togglePasswordVisibility(inputId,buttonId){
+    const input=document.getElementById(inputId);
+    const button=document.getElementById(buttonId);
+    if(!input)return;
+
+    const visible=input.type==="text";
+    input.type=visible?"password":"text";
+
+    if(button){
+        button.textContent=visible?"👁️":"🙈";
+        button.setAttribute("aria-label",visible?"إظهار كلمة المرور":"إخفاء كلمة المرور");
+        button.setAttribute("title",visible?"إظهار كلمة المرور":"إخفاء كلمة المرور");
     }
 }
 
