@@ -186,7 +186,11 @@ body{
 .game-controls-right{display:flex;align-items:center;gap:8px}
 .save-btn{background:#ffd54a;color:#151000}
 .save-btn:disabled{opacity:.55;cursor:wait}
-.game-save-status{position:absolute;top:72px;right:20px;z-index:6;padding:8px 12px;border-radius:10px;background:rgba(3,10,3,.9);color:#9fffb8;border:1px solid rgba(0,255,102,.22);font-size:12px;display:none}
+.game-save-status{
+    width:100%;min-height:26px;margin:10px auto 0;text-align:center;
+    padding:7px 12px;color:#9fffb8;font-size:13px;font-weight:800;
+    display:none;line-height:1.5;
+}
 .back-btn{background:#f43f5e;color:#fff}.full-btn{background:#00ff66;color:#010301}
 .iframe-container{width:100%;height:calc(100vh - 65px);background:#000;position:relative}
 iframe{width:100%;height:100%;border:none}
@@ -859,13 +863,12 @@ iframe{width:100%;height:100%;border:none}
                     </div>
                 </div>
                 <div class="game-player-actions">
-                    <button id="game-save-btn" class="player-action save-btn" onclick="saveCurrentGameProgress()">💾 حفظ التقدم</button>
+                    <button id="game-save-btn" class="player-action save-btn" onclick="saveCurrentGameProgress(true)">💾 حفظ التقدم</button>
                 </div>
             </div>
 
             <div class="iframe-container">
                 <button class="player-full-btn" onclick="goFull()">⛶ <span>تكبير</span></button>
-                <div id="game-save-status" class="game-save-status"></div>
                 <div id="game-loading" class="game-loading">
                     <div class="loading-box">
                         <div class="loading-spinner-wrap">
@@ -878,6 +881,7 @@ iframe{width:100%;height:100%;border:none}
                 </div>
                 <iframe id="game-container" src="" allowfullscreen></iframe>
             </div>
+            <div id="game-save-status" class="game-save-status" role="status" aria-live="polite"></div>
         </section>
 
         <section class="game-info-card">
@@ -1768,12 +1772,12 @@ function restoreStorageBaseline(){
     activeGameLocalBaseline=null;
     activeGameSessionBaseline=null;
 }
-function setGameSaveStatus(text){
+function setGameSaveStatus(text,type){
     const el=document.getElementById("game-save-status");
     if(!el)return;
-    // رسالة الحفظ لا تظهر أثناء اللعب؛ الحفظ يعمل في الخلفية.
-    el.textContent="";
-    el.style.display="none";
+    el.textContent=text||"";
+    el.style.display=text?"block":"none";
+    el.style.color=type==="error"?"#ff9cae":"#9fffb8";
 }
 function hideGameChrome(){
     document.getElementById("game-screen")?.classList.add("is-fullscreen");
@@ -1824,9 +1828,19 @@ async function restoreCurrentGameProgress(){
 function serializeSaveSignature(payload){
     try{return JSON.stringify(payload)}catch(e){return "";}
 }
-async function saveCurrentGameProgress(){
-    if(!activeGameName || !currentUser || !db)return false;
+async function saveCurrentGameProgress(manual=false){
+    if(!activeGameName){
+        if(manual)setGameSaveStatus("افتح لعبة أولًا.","error");
+        return false;
+    }
+    if(!currentUser || !db){
+        if(manual)setGameSaveStatus("سجّل الدخول أولًا لحفظ التقدم.","error");
+        return false;
+    }
+
     const btn=document.getElementById("game-save-btn");
+    if(manual)setGameSaveStatus("جاري الحفظ...");
+
     if(btn)btn.disabled=true;
     try{
         const localSnapshot=captureStorage(window.localStorage);
@@ -1838,6 +1852,7 @@ async function saveCurrentGameProgress(){
             sessionStorageSnapshot:sessionSnapshot,
             savedAt:firebase.firestore.FieldValue.serverTimestamp()
         };
+
         applySavedExplicitState();
 
         const compact=JSON.stringify({
@@ -1846,13 +1861,20 @@ async function saveCurrentGameProgress(){
             localStorageSnapshot:payload.localStorageSnapshot,
             sessionStorageSnapshot:payload.sessionStorageSnapshot
         });
+
         if(compact.length>850000){
             console.warn("Game save too large:",activeGameName,compact.length);
+            if(manual)setGameSaveStatus("تعذر حفظ التقدم: بيانات الحفظ كبيرة جدًا.","error");
             return false;
         }
 
         const signature=serializeSaveSignature(JSON.parse(compact));
-        if(signature===activeGameLastSavedSignature)return true;
+
+        // لو نفس التقدم محفوظ بالفعل، نعتبر العملية ناجحة ونخبر اللاعب بذلك.
+        if(signature===activeGameLastSavedSignature){
+            if(manual)setGameSaveStatus("تم الحفظ ✅");
+            return true;
+        }
 
         await db.collection("users").doc(currentUser.uid)
             .collection("gameSaves").doc(gameSaveDocId(activeGameName))
@@ -1860,9 +1882,18 @@ async function saveCurrentGameProgress(){
 
         activeGameLastSavedSignature=signature;
         console.info("Matrix game saved:",activeGameName);
+
+        if(manual){
+            setGameSaveStatus("تم الحفظ ✅");
+            setTimeout(()=>{
+                const el=document.getElementById("game-save-status");
+                if(el && el.textContent==="تم الحفظ ✅")el.style.display="none";
+            },2200);
+        }
         return true;
     }catch(e){
         console.warn("saveCurrentGameProgress:",e);
+        if(manual)setGameSaveStatus("تعذر حفظ التقدم. حاول مرة أخرى.","error");
         return false;
     }finally{
         if(btn)btn.disabled=false;
@@ -1872,8 +1903,8 @@ function startGameAutosave(){
     stopGameAutosave();
     if(!currentUser)return;
     // أول حفظ سريع ثم حفظ مستمر كل 3 ثواني.
-    saveCurrentGameProgress();
-    activeGameSaveTimer=setInterval(()=>{saveCurrentGameProgress();},3000);
+    saveCurrentGameProgress(false);
+    activeGameSaveTimer=setInterval(()=>{saveCurrentGameProgress(false);},3000);
 }
 function stopGameAutosave(){
     if(activeGameSaveTimer){clearInterval(activeGameSaveTimer);activeGameSaveTimer=null;}
@@ -1883,13 +1914,13 @@ window.addEventListener("message",event=>{
     if(!activeGameName)return;
     if(event.origin!==window.location.origin)return;
     activeGameExplicitState=event.data.state===undefined?null:event.data.state;
-    saveCurrentGameProgress();
+    saveCurrentGameProgress(false);
 });
 document.addEventListener("visibilitychange",()=>{
-    if(document.visibilityState==="hidden" && activeGameName) saveCurrentGameProgress();
+    if(document.visibilityState==="hidden" && activeGameName) saveCurrentGameProgress(false);
 });
 window.addEventListener("pagehide",()=>{
-    if(activeGameName) saveCurrentGameProgress();
+    if(activeGameName) saveCurrentGameProgress(false);
 });
 
 function gameSimilarityScore(target, candidate){
