@@ -26,11 +26,9 @@
   "image":"https://matrix-games-world.github.io/assets/matrix-favicon-48.png"
 }
 </script>
-<link id="favicon-png" rel="icon" type="image/png" sizes="48x48" href="https://matrix-games-world.github.io/assets/matrix-favicon-48.png">
 <link rel="icon" type="image/png" href="/assets/matrix-favicon-48.png">
 <meta name="thumbnail" content="https://matrix-games-world.github.io/assets/matrix-favicon-48.png">
 <link id="favicon-jpg" rel="icon" type="image/jpeg" href="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg">
-<link id="favicon-shortcut" rel="shortcut icon" type="image/png" href="https://matrix-games-world.github.io/assets/matrix-favicon-48.png">
 <link id="favicon-apple" rel="apple-touch-icon" href="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg">
 <title>Matrix Games: The World | ألعاب مجانية أونلاين</title>
 
@@ -2745,15 +2743,17 @@ async function loadSiteSettings(){
 function applySiteSettings(){
     const logo=siteSettings.logo||"assets/matrix-logo-192.jpg";
     document.querySelectorAll(".site-logo,#hero-logo").forEach(el=>{el.src=logo;});
-    // ثبّت favicon الخاص بنتائج Google على ملف ثابت وقابل للزحف.
-    const faviconPng=document.getElementById("favicon-png");
-    const faviconShortcut=document.getElementById("favicon-shortcut");
+    // ثبّت favicon الأساسي على اللوجو الكبير وبعنوان URL ثابت.
     const faviconJpg=document.getElementById("favicon-jpg");
     const faviconApple=document.getElementById("favicon-apple");
-    if(faviconPng){faviconPng.href="/assets/matrix-favicon-48.png";faviconPng.type="image/png";}
-    if(faviconShortcut){faviconShortcut.href="/assets/matrix-favicon-48.png";faviconShortcut.type="image/png";}
-    if(faviconJpg){faviconJpg.href="/assets/matrix-logo-192.jpg";faviconJpg.type="image/jpeg";}
-    if(faviconApple){faviconApple.href="/assets/matrix-logo-192.jpg";faviconApple.type="image/jpeg";}
+    if(faviconJpg){
+        faviconJpg.href="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg";
+        faviconJpg.type="image/jpeg";
+    }
+    if(faviconApple){
+        faviconApple.href="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg";
+        faviconApple.type="image/jpeg";
+    }
     const title=document.getElementById("hero-title");if(title)title.textContent=BRAND_NAME;
     const subtitle=document.getElementById("hero-subtitle");if(subtitle)subtitle.textContent=(siteSettings.heroSubtitle&&siteSettings.heroSubtitle!==BRAND_NAME)?siteSettings.heroSubtitle:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.";
     const headerTitle=document.getElementById("header-site-title");if(headerTitle)headerTitle.textContent=BRAND_NAME;
