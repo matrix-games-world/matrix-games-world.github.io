@@ -380,15 +380,18 @@ iframe{width:100%;height:100%;border:none}
     <div class="logo-title"><img class="site-logo" src="assets/matrix-logo-192.jpg" alt="Matrix Games: The World"><span id="header-site-title">Matrix Games: The World</span></div>
     <div class="header-actions">
         <input type="search" id="search-input" class="search-box"
-               name="site-search"
+               name="q"
                placeholder="🔍 ابحث عن لعبة أو اسم..."
                autocomplete="off"
                autocapitalize="none"
                autocorrect="off"
                spellcheck="false"
+               readonly
                data-lpignore="true"
                data-1p-ignore="true"
+               data-bwignore="true"
                aria-label="البحث عن لعبة"
+               onfocus="this.removeAttribute('readonly')"
                oninput="filterGames()">
         <button id="admin-panel-btn" class="admin-trigger-btn"
                 onclick="toggleAdminPanelVisibility()">لوحة الأدمن ⚙️</button>
