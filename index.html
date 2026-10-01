@@ -1508,6 +1508,9 @@ let remoteGamePreviewBatchBusy = false;
 let gameImagesBackgroundReady = false;
 let gameImagesBackgroundTimer = null;
 let allGameImagesPromise = null;
+let imageCacheDbPromise = null;
+const IMAGE_CACHE_DB = "MatrixGamesImageCache";
+const IMAGE_CACHE_STORE = "images";
 let currentUser = null;
 let currentProfile = null;
 let favoriteGames = new Set();
@@ -1592,6 +1595,73 @@ function applyAllLoadedGameImages(){
     });
 }
 
+function openImageCache(){
+    if(imageCacheDbPromise)return imageCacheDbPromise;
+
+    imageCacheDbPromise=new Promise((resolve,reject)=>{
+        if(!("indexedDB" in window)){
+            resolve(null);
+            return;
+        }
+
+        const req=indexedDB.open(IMAGE_CACHE_DB,1);
+        req.onupgradeneeded=()=>{
+            const dbx=req.result;
+            if(!dbx.objectStoreNames.contains(IMAGE_CACHE_STORE)){
+                dbx.createObjectStore(IMAGE_CACHE_STORE,{keyPath:"name"});
+            }
+        };
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>resolve(null);
+    });
+
+    return imageCacheDbPromise;
+}
+
+async function readCachedGameImages(){
+    const dbx=await openImageCache();
+    if(!dbx)return 0;
+
+    return new Promise(resolve=>{
+        try{
+            const tx=dbx.transaction(IMAGE_CACHE_STORE,"readonly");
+            const store=tx.objectStore(IMAGE_CACHE_STORE);
+            const req=store.getAll();
+
+            req.onsuccess=()=>{
+                let count=0;
+                (req.result||[]).forEach(row=>{
+                    if(!row?.name || !row?.image)return;
+                    const idx=catalog.findIndex(g=>g.name===row.name);
+                    if(idx>=0){
+                        catalog[idx].image=row.image;
+                        count++;
+                    }
+                });
+                resolve(count);
+            };
+            req.onerror=()=>resolve(0);
+        }catch(e){
+            resolve(0);
+        }
+    });
+}
+
+async function writeCachedGameImages(rows){
+    const dbx=await openImageCache();
+    if(!dbx || !rows?.length)return;
+
+    try{
+        const tx=dbx.transaction(IMAGE_CACHE_STORE,"readwrite");
+        const store=tx.objectStore(IMAGE_CACHE_STORE);
+        rows.forEach(row=>{
+            if(row?.name && row?.image)store.put({name:row.name,image:row.image});
+        });
+    }catch(e){
+        console.warn("Image cache write:",e);
+    }
+}
+
 async function loadAllGameImagesOnce(){
     if(!db)return;
     if(allGameImagesPromise)return allGameImagesPromise;
@@ -1599,14 +1669,23 @@ async function loadAllGameImagesOnce(){
     allGameImagesPromise=db.collection("games")
         .where("source","==","local")
         .get()
-        .then(snap=>{
+        .then(async snap=>{
+            const rows=[];
+
             snap.forEach(doc=>{
                 const data=doc.data()||{};
                 if(!data.name || !data.image)return;
+
                 const idx=catalog.findIndex(g=>g.name===data.name);
-                if(idx>=0)catalog[idx]={...catalog[idx],...data,id:doc.id};
+                if(idx>=0){
+                    catalog[idx]={...catalog[idx],...data,id:doc.id};
+                    rows.push({name:data.name,image:data.image});
+                }
             });
+
+            // حدّث العناصر الموجودة بدون إعادة بناء شبكة الألعاب كلها.
             applyAllLoadedGameImages();
+            await writeCachedGameImages(rows);
         })
         .catch(e=>{
             console.warn("All game images:",e);
@@ -1614,6 +1693,7 @@ async function loadAllGameImagesOnce(){
 
     return allGameImagesPromise;
 }
+
 
 function setupLazyGameImages(){
     // تم إلغاء التحميل صورة-بصورة عمدًا.
@@ -1638,7 +1718,7 @@ function gameCardHtml(game){
     if(favoriteGames.has(game.name))badges.push("❤️ مفضلة");
     return `<div class="game-card" data-game="${encodeURIComponent(game.name)}" onclick="openGame(decodeURIComponent(this.dataset.game))">
         <div class="game-badges">${badges.filter(b=>b!=="❤️ مفضلة").map(b=>`<span class="game-badge">${b}</span>`).join("")}</div>
-        <img class="game-thumb" loading="eager" decoding="async" data-game-preview="${encodeURIComponent(game.name)}" data-game-pending="${game.image?"false":"true"}" src="${img}" alt="${title}" onerror="this.onerror=null;this.src=GAME_PLACEHOLDER_IMAGE">
+        <img class="game-thumb" loading="eager" fetchpriority="high" decoding="async" data-game-preview="${encodeURIComponent(game.name)}" data-game-pending="${game.image?"false":"true"}" src="${img}" alt="${title}" onerror="this.onerror=null;this.src=GAME_PLACEHOLDER_IMAGE">
         <div class="game-title-row">
             <button class="favorite-btn ${favoriteGames.has(game.name)?"active":""}" title="المفضلة" data-game="${encodeURIComponent(game.name)}" onclick="toggleFavorite(this.dataset.game,event)">★</button>
             <div class="game-title">${title}</div>
@@ -3135,16 +3215,17 @@ async function loadRemoteCustomGamesInBackground(){
 async function reloadGames(){
     buildBaseCatalog();
     await loadSiteSettings();
+
+    // لو الصور اتحملت قبل كده، استخدمها فورًا من الجهاز بدل انتظار Firebase.
+    await readCachedGameImages();
+
     renderCategoryBar();
     renderHomeSections();
     renderGames();
     loadAdminDashboard();
 
-    // الصور الحقيقية تُجلب دفعة واحدة بعد ظهور الواجهة، ثم تُطبّق كلها معًا.
-    loadAllGameImagesOnce().then(()=>{
-        renderHomeSections();
-        renderGames();
-    });
+    // تحديث الصور من Firebase في الخلفية، بدون إعادة بناء الـ300 بطاقة.
+    loadAllGameImagesOnce();
 
     setTimeout(()=>loadRemoteCustomGamesInBackground(),1200);
 }
