@@ -1513,6 +1513,9 @@ const IMAGE_CACHE_DB = "MatrixGamesImageCache";
 const IMAGE_CACHE_STORE = "images";
 let currentUser = null;
 let currentProfile = null;
+// تُستخدم فقط لحماية رابط Zombie Rush القادم من تطبيق Unity إلى أن نعرف حالة تسجيل الدخول.
+let authStateReady = false;
+let unityRouteWaitingForAuth = false;
 let favoriteGames = new Set();
 let selectedCategory = "الكل";
 let activeGameName = null;
@@ -3243,14 +3246,32 @@ renderGames();
 
 // تحميل الألعاب والإعدادات المخصصة من Firestore تلقائيًا عند فتح الموقع.
 function routeFromUrl(){
-    const gameParam=new URLSearchParams(location.search).get("game");
+    const params=new URLSearchParams(location.search);
+    const gameParam=params.get("game");
     if(!gameParam){
+        unityRouteWaitingForAuth=false;
         if(document.getElementById("game-screen")?.classList.contains("is-open"))closeGame(false);
         return;
     }
+
     const name=decodeURIComponent(gameParam);
     const exists=catalog.some(g=>g.name===name);
-    if(exists)openGame(encodeURIComponent(name),true);
+    if(!exists)return;
+
+    // داخل تطبيق Unity، اجعل Zombie Rush فقط تتطلب تسجيل الدخول قبل فتحها
+    // حتى يستطيع الموقع استرجاع الحفظ السحابي من حساب اللاعب.
+    const requiresCloudAccount=params.get("unity")==="1" && name==="zombie-rush";
+    if(requiresCloudAccount && firebaseReady && !authStateReady)return;
+    if(requiresCloudAccount && firebaseReady && !currentUser){
+        unityRouteWaitingForAuth=true;
+        openAuthModal();
+        authMessage("سجّل الدخول أو أنشئ حسابًا أولًا لحفظ تقدم Zombie Rush ومزامنته بين أجهزتك.");
+        return;
+    }
+
+    unityRouteWaitingForAuth=false;
+    if(activeGameName===name && document.getElementById("game-screen")?.classList.contains("is-open"))return;
+    openGame(encodeURIComponent(name),true);
 }
 
 if(firebaseReady){
@@ -3292,9 +3313,22 @@ if(firebaseReady){
             authMessage("تعذر إكمال تسجيل الدخول: "+friendlyFirebaseError(e));
         });
 
-    auth.onAuthStateChanged(user=>{
-        loadUserProfile(user).catch(console.error);
+    auth.onAuthStateChanged(async user=>{
+        try{
+            await loadUserProfile(user);
+        }catch(e){
+            console.error(e);
+        }
+        authStateReady=true;
         setTimeout(()=>applySiteSettings(),0);
+
+        // بعد التأكد من جلسة Firebase، أعد فحص رابط Unity:
+        // اللاعب المسجل يكمل للعبة، وغير المسجل تظهر له نافذة الدخول.
+        const params=new URLSearchParams(location.search);
+        if(params.get("unity")==="1" && params.get("game")==="zombie-rush"){
+            if(user)closeAuthModal();
+            routeFromUrl();
+        }
     });
 }else{
     document.getElementById("game-counter").textContent =
