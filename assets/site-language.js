@@ -71,7 +71,7 @@ function apply(next){
  const btn=document.getElementById("matrix-language-switcher");
  if(btn){btn.querySelector("[data-lang-label]").textContent=c.language;btn.querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.getAttribute("data-lang")===l));}
  txt("#search-input",c.search);const si=document.getElementById("search-input");if(si)si.placeholder=c.search;
- txt("#admin-panel-btn",c.admin);txt("#auth-btn-trigger",c.login);txt("#logout-btn",c.logout);
+ txt("#admin-panel-btn",c.admin);txt("#auth-btn-trigger",c.login);txt("#logout-btn",c.logout);txt("#game-auth-btn",c.login);txt("#game-logout-btn",c.logout);
  txt("#hero-title","Matrix Games: The World");txt("#hero-subtitle",c.hero);txt("#all-games-title",c.games);
  const back=document.querySelector("#game-screen .game-back-btn");if(back)back.textContent=c.back;
  const sv=document.getElementById("game-save-btn");if(sv)sv.textContent=c.save;
