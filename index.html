@@ -11,6 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Matrix Games: The World | ألعاب مجانية أونلاين">
 <meta property="og:site_name" content="Matrix Games: The World">
+<meta property="og:logo" content="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg">
 <meta property="og:description" content="اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح، من الأكشن والرياضة إلى الألغاز والرعب والمغامرات وألعاب اللاعبين.">
 <meta property="og:url" content="https://matrix-games-world.github.io/">
 <meta property="og:image" content="https://matrix-games-world.github.io/assets/matrix-logo-192.jpg">
@@ -19,11 +20,21 @@
 <script id="matrix-website-schema" type="application/ld+json">
 {
   "@context":"https://schema.org",
-  "@type":"WebSite",
-  "name":"Matrix Games: The World",
-  "alternateName":["Matrix Games","Matrix Games World"],
-  "url":"https://matrix-games-world.github.io/",
-  "image":"https://matrix-games-world.github.io/assets/matrix-favicon-48.png"
+  "@graph":[
+    {
+      "@type":"WebSite",
+      "name":"Matrix Games: The World",
+      "alternateName":["Matrix Games","Matrix Games World"],
+      "url":"https://matrix-games-world.github.io/",
+      "image":"https://matrix-games-world.github.io/assets/matrix-favicon-48.png"
+    },
+    {
+      "@type":"Organization",
+      "name":"Matrix Games: The World",
+      "url":"https://matrix-games-world.github.io/",
+      "logo":"https://matrix-games-world.github.io/assets/matrix-logo-192.jpg"
+    }
+  ]
 }
 </script>
 <link rel="icon" type="image/png" href="/assets/matrix-favicon-48.png">
