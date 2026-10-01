@@ -1508,6 +1508,7 @@ let activeGameSessionBaseline = null;
 let activeGameExplicitState = null;
 let activeGameSaveTimer = null;
 let activeGameLastSavedSignature = "";
+let activeGameSaveInFlight = false;
 let siteSettings = {
     title:"Matrix Games: The World",
     heroTitle:"Matrix Games: The World",
@@ -1828,6 +1829,16 @@ async function restoreCurrentGameProgress(){
 function serializeSaveSignature(payload){
     try{return JSON.stringify(payload)}catch(e){return "";}
 }
+function getActiveGameStorage(kind){
+    try{
+        const iframe=document.getElementById("game-container");
+        const frameWindow=iframe?.contentWindow;
+        const storage=frameWindow?.[kind];
+        if(storage)return storage;
+    }catch(e){}
+    return window[kind];
+}
+
 async function saveCurrentGameProgress(manual=false){
     if(!activeGameName){
         if(manual)setGameSaveStatus("افتح لعبة أولًا.","error");
@@ -1837,29 +1848,39 @@ async function saveCurrentGameProgress(manual=false){
         if(manual)setGameSaveStatus("سجّل الدخول أولًا لحفظ التقدم.","error");
         return false;
     }
+    if(activeGameSaveInFlight)return false;
 
     const btn=document.getElementById("game-save-btn");
     if(manual)setGameSaveStatus("جاري الحفظ...");
 
     if(btn)btn.disabled=true;
+    activeGameSaveInFlight=true;
+
     try{
-        const localSnapshot=captureStorage(window.localStorage);
-        const sessionSnapshot=captureStorage(window.sessionStorage);
+        const gameLocalStorage=getActiveGameStorage("localStorage");
+        const gameSessionStorage=getActiveGameStorage("sessionStorage");
+
+        const localNow=captureStorage(gameLocalStorage);
+        const sessionNow=captureStorage(gameSessionStorage);
+
+        // نحفظ فقط ما غيّرته اللعبة منذ فتحها، بدل تخزين كل localStorage.
+        // هذا يقلل حجم الحفظ جدًا ويمنع وصول مستند Firestore إلى الحد الأقصى.
+        const localDiff=storageDiff(activeGameLocalBaseline||{},localNow);
+        const sessionDiff=storageDiff(activeGameSessionBaseline||{},sessionNow);
+
         const payload={
             gameName:activeGameName,
             explicitState:activeGameExplicitState===undefined?null:activeGameExplicitState,
-            localStorageSnapshot:localSnapshot,
-            sessionStorageSnapshot:sessionSnapshot,
+            localStorageDiff:localDiff,
+            sessionStorageDiff:sessionDiff,
             savedAt:firebase.firestore.FieldValue.serverTimestamp()
         };
-
-        applySavedExplicitState();
 
         const compact=JSON.stringify({
             gameName:payload.gameName,
             explicitState:payload.explicitState,
-            localStorageSnapshot:payload.localStorageSnapshot,
-            sessionStorageSnapshot:payload.sessionStorageSnapshot
+            localStorageDiff:payload.localStorageDiff,
+            sessionStorageDiff:payload.sessionStorageDiff
         });
 
         if(compact.length>850000){
@@ -1870,7 +1891,6 @@ async function saveCurrentGameProgress(manual=false){
 
         const signature=serializeSaveSignature(JSON.parse(compact));
 
-        // لو نفس التقدم محفوظ بالفعل، نعتبر العملية ناجحة ونخبر اللاعب بذلك.
         if(signature===activeGameLastSavedSignature){
             if(manual)setGameSaveStatus("تم الحفظ ✅");
             return true;
@@ -1881,7 +1901,10 @@ async function saveCurrentGameProgress(manual=false){
             .set(payload,{merge:true});
 
         activeGameLastSavedSignature=signature;
-        console.info("Matrix game saved:",activeGameName);
+        console.info("Matrix game saved:",activeGameName,{
+            localKeys:Object.keys(localDiff).length,
+            sessionKeys:Object.keys(sessionDiff).length
+        });
 
         if(manual){
             setGameSaveStatus("تم الحفظ ✅");
@@ -1904,15 +1927,16 @@ async function saveCurrentGameProgress(manual=false){
         }
         return false;
     }finally{
+        activeGameSaveInFlight=false;
         if(btn)btn.disabled=false;
     }
 }
 function startGameAutosave(){
     stopGameAutosave();
     if(!currentUser)return;
-    // أول حفظ سريع ثم حفظ مستمر كل 3 ثواني.
+    // أول حفظ سريع ثم حفظ مستمر كل ثانيتين.
     saveCurrentGameProgress(false);
-    activeGameSaveTimer=setInterval(()=>{saveCurrentGameProgress(false);},3000);
+    activeGameSaveTimer=setInterval(()=>{saveCurrentGameProgress(false);},2000);
 }
 function stopGameAutosave(){
     if(activeGameSaveTimer){clearInterval(activeGameSaveTimer);activeGameSaveTimer=null;}
