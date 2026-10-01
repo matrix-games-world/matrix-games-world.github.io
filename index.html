@@ -2562,6 +2562,7 @@ async function loadUserProfile(user){
     }
 
     currentProfile=profile;
+    syncAuthControls();
     favoriteGames=new Set(profile.favorites||getLocalFavorites());
     saveLocalFavorites();
 
