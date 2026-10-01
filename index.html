@@ -304,6 +304,9 @@ iframe{width:100%;height:100%;border:none}
 .game-detail-heading{min-width:0;flex:1;text-align:right}
 .game-detail-kicker{font-size:10px;letter-spacing:2px;color:#6f946f;font-weight:900}
 .game-detail-heading h2{margin:3px 0 4px;color:#00ff66;font-size:28px;line-height:1.2}
+.game-detail-account-actions{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:0 0 auto}
+.game-account-btn{white-space:nowrap;padding:11px 15px;font-size:13px}
+.game-account-user{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .game-detail-meta{color:#9bb39b;font-size:12px}
 .game-player-card,.game-info-card,.related-games-section{
     background:rgba(4,12,4,.94);border:1px solid #173617;border-radius:20px;
@@ -374,6 +377,9 @@ iframe{width:100%;height:100%;border:none}
     .game-detail-topbar{padding:12px;gap:12px}
     .game-back-btn{padding:12px 16px;font-size:14px}
     .game-detail-heading h2{font-size:22px}
+    .game-detail-account-actions{width:100%;flex:1 0 100%;justify-content:flex-start;flex-wrap:wrap}
+    .game-account-btn{padding:10px 13px;font-size:12px}
+    .game-account-user{max-width:150px}
     .game-player-header{align-items:flex-start;flex-direction:column}
     .game-player-actions{width:100%}
     .player-action{width:100%}
@@ -861,6 +867,13 @@ iframe{width:100%;height:100%;border:none}
             <div class="game-detail-heading">
                 <div class="game-detail-kicker">MATRIX GAMES • GAME PAGE</div>
                 <div id="game-detail-meta" class="game-detail-meta">🎮 ألعاب</div>
+            </div>
+            <div class="game-detail-account-actions">
+                <button id="game-auth-btn" class="auth-trigger-btn game-account-btn"
+                        type="button" onclick="openAuthModal()">تسجيل الدخول 🎮</button>
+                <button id="game-logout-btn" class="logout-btn game-account-btn"
+                        type="button" onclick="logoutPlayer()">خروج</button>
+                <div id="game-user-display" class="user-badge game-account-user"></div>
             </div>
         </div>
 
@@ -2490,14 +2503,27 @@ function friendlyFirebaseError(e){
    7) المستخدم + المفضلة + آخر الألعاب
 ========================================================= */
 function syncAuthControls(){
-    const loginBtn=document.getElementById("auth-btn-trigger");
-    const logoutBtn=document.getElementById("logout-btn");
-    const userDisplay=document.getElementById("user-display");
     const loggedIn=!!currentUser;
+    const fallbackName=currentUser?.email?.split("@")[0]||currentUser?.displayName||"لاعب";
+    const displayName=currentProfile?.username||fallbackName;
 
-    if(loginBtn)loginBtn.style.display=loggedIn?"none":"inline-block";
-    if(logoutBtn)logoutBtn.style.display=loggedIn?"inline-block":"none";
-    if(userDisplay)userDisplay.style.display=loggedIn?"inline-block":"none";
+    const controls=[
+        {login:"auth-btn-trigger",logout:"logout-btn",user:"user-display"},
+        {login:"game-auth-btn",logout:"game-logout-btn",user:"game-user-display"}
+    ];
+
+    controls.forEach(group=>{
+        const loginBtn=document.getElementById(group.login);
+        const logoutBtn=document.getElementById(group.logout);
+        const userDisplay=document.getElementById(group.user);
+
+        if(loginBtn)loginBtn.style.display=loggedIn?"none":"inline-flex";
+        if(logoutBtn)logoutBtn.style.display=loggedIn?"inline-flex":"none";
+        if(userDisplay){
+            userDisplay.style.display=loggedIn?"inline-flex":"none";
+            if(loggedIn)userDisplay.textContent="👤 "+displayName;
+        }
+    });
 }
 
 async function loadUserProfile(user){
