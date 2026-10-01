@@ -1893,7 +1893,15 @@ async function saveCurrentGameProgress(manual=false){
         return true;
     }catch(e){
         console.warn("saveCurrentGameProgress:",e);
-        if(manual)setGameSaveStatus("تعذر حفظ التقدم. حاول مرة أخرى.","error");
+        if(manual){
+            if(e?.code==="permission-denied"){
+                setGameSaveStatus("تعذر الحفظ: صلاحيات Firestore تمنع حفظ تقدم اللاعب.","error");
+            }else if(e?.code==="failed-precondition"){
+                setGameSaveStatus("تعذر الحفظ: إعدادات Firestore تحتاج مراجعة.","error");
+            }else{
+                setGameSaveStatus("تعذر حفظ التقدم. حاول مرة أخرى.","error");
+            }
+        }
         return false;
     }finally{
         if(btn)btn.disabled=false;
@@ -1992,10 +2000,14 @@ async function openGame(encodedName, routeOnly=false){
         return;
     }
 
-    // لا نؤخر فتح اللعبة بسبب انتظار Firestore؛ الحفظ يكمل في الخلفية.
-    void saveCurrentGameProgress();
-    stopGameAutosave();
-    restoreStorageBaseline();
+    // احفظ اللعبة الحالية أولًا قبل إعادة ضبط مساحة التخزين.
+    if(activeGameName){
+        await saveCurrentGameProgress(false);
+        stopGameAutosave();
+        restoreStorageBaseline();
+    }else{
+        stopGameAutosave();
+    }
 
     activeGameName=name;
     activeGameId=game?.id||name;
@@ -2027,10 +2039,16 @@ async function openGame(encodedName, routeOnly=false){
         history.pushState({matrixGame:name},"",nextUrl);
     }
 
+    // استرجاع آخر حفظ من الحساب قبل أن تبدأ اللعبة، لأن معظم ألعاب HTML
+    // تقرأ localStorage عند أول تحميل فقط.
+    if(currentUser && db){
+        await restoreCurrentGameProgress();
+    }
+
     iframe.onload=()=>{
         hideGameLoading();
         startGameAutosave();
-        // لا نعيد تحميل اللعبة مرة ثانية بعد فتحها؛ إعادة التحميل كانت تجعل الألعاب البطيئة تُحمّل مرتين للمستخدم المسجّل.
+        // الحفظ المستمر يبدأ بعد تحميل اللعبة واستخدام البيانات المسترجعة.
     };
     iframe.onerror=()=>{
         hideGameLoading();
@@ -2044,7 +2062,6 @@ async function openGame(encodedName, routeOnly=false){
     if(isCustom){
         iframe.srcdoc=buildCustomGameDocument(game);
     }else{
-        // لا تستخدم srcdoc إطلاقًا مع الألعاب المحلية.
         iframe.src=gameUrl(name);
     }
 
