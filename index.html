@@ -1542,6 +1542,8 @@ let unityRouteWaitingForAuth = false;
 let favoriteGames = new Set();
 let selectedCategory = "الكل";
 let activeGameName = null;
+let gameOpenSequence = 0;
+let activeGameLoadingTimer = null;
 let activeGameId = null;
 let activeGameLocalBaseline = null;
 let activeGameSessionBaseline = null;
@@ -1926,7 +1928,7 @@ function applySavedExplicitState(){
         }
     }catch(e){}
 }
-async function restoreCurrentGameProgress(manual=false){
+async function restoreCurrentGameProgress(manual=false, context=null){
     if(!activeGameName){
         if(manual)setGameSaveStatus("افتح لعبة أولًا.", "error");
         return false;
@@ -1937,8 +1939,14 @@ async function restoreCurrentGameProgress(manual=false){
     }
 
     try{
-        const snap=await db.collection("users").doc(currentUser.uid)
-            .collection("gameSaves").doc(gameSaveDocId(activeGameName)).get();
+        const restoreGameName=activeGameName;
+        const restoreUserId=currentUser.uid;
+        const snap=await db.collection("users").doc(restoreUserId)
+            .collection("gameSaves").doc(gameSaveDocId(restoreGameName)).get();
+
+        // إذا انتهت مهلة الاستعادة أو انتقل اللاعب إلى لعبة أخرى، لا تطبّق حفظًا متأخرًا.
+        if(context && (context.cancelled || context.gameName!==activeGameName ||
+            context.openToken!==gameOpenSequence)) return false;
 
         if(!snap.exists){
             if(manual)setGameSaveStatus("لا يوجد تقدم محفوظ لهذه اللعبة في حسابك بعد.", "error");
@@ -2256,6 +2264,9 @@ async function openGame(encodedName, routeOnly=false){
         return;
     }
 
+    const openToken=++gameOpenSequence;
+    if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
+
     // احفظ اللعبة الحالية أولًا قبل إعادة ضبط مساحة التخزين.
     if(activeGameName){
         await saveCurrentGameProgress(false);
@@ -2295,20 +2306,41 @@ async function openGame(encodedName, routeOnly=false){
         history.pushState({matrixGame:name},"",nextUrl);
     }
 
-    // استرجاع آخر حفظ من الحساب قبل أن تبدأ اللعبة، لأن معظم ألعاب HTML
-    // تقرأ localStorage عند أول تحميل فقط.
+    // نحاول استعادة الحفظ السحابي لفترة قصيرة فقط. لا نسمح لبطء Firestore
+    // بمنع فتح اللعبة؛ إذا تأخرت الاستعادة نفتح اللعبة بدونها هذه المرة.
     if(currentUser && db){
-        await restoreCurrentGameProgress();
+        const restoreContext={gameName:name,openToken,cancelled:false};
+        let restoreTimer=null;
+        const restorePromise=restoreCurrentGameProgress(false,restoreContext)
+            .then(value=>({finished:true,value}))
+            .catch(error=>{
+                console.warn("Automatic game progress restore:",error);
+                return {finished:true,value:false};
+            });
+        const restoreResult=await Promise.race([
+            restorePromise,
+            new Promise(resolve=>{
+                restoreTimer=setTimeout(()=>resolve({finished:false,value:false}),1400);
+            })
+        ]);
+        if(restoreTimer)clearTimeout(restoreTimer);
+        if(!restoreResult.finished)restoreContext.cancelled=true;
     }
 
+    if(openToken!==gameOpenSequence)return;
+
     iframe.onload=()=>{
+        if(openToken!==gameOpenSequence)return;
+        if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
         hideGameLoading();
         startGameAutosave();
         // الحفظ المستمر يبدأ بعد تحميل اللعبة واستخدام البيانات المسترجعة.
     };
     iframe.onerror=()=>{
+        if(openToken!==gameOpenSequence)return;
+        if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
         hideGameLoading();
-        setGameSaveStatus("");
+        setGameSaveStatus("تعذر تحميل ملف اللعبة. جرّب فتحها مرة أخرى.", "error");
     };
 
     iframe.removeAttribute("srcdoc");
@@ -2321,6 +2353,15 @@ async function openGame(encodedName, routeOnly=false){
         iframe.src=gameUrl(name);
     }
 
+    // يمنع بقاء شاشة التحميل تدور إلى الأبد إذا لم يرسل iframe حدث load.
+    if(activeGameLoadingTimer)clearTimeout(activeGameLoadingTimer);
+    activeGameLoadingTimer=setTimeout(()=>{
+        if(openToken!==gameOpenSequence)return;
+        activeGameLoadingTimer=null;
+        hideGameLoading();
+        setGameSaveStatus("اللعبة تأخرت في التحميل. جرّب الانتظار قليلًا أو أعد فتح اللعبة.", "error");
+    },15000);
+
     recordLocalPlay(name);
     saveGameActivity(name);
     trackAnalytics("game_start",{game_name:name,game_category:getGameCategory(game||{})});
@@ -2328,6 +2369,8 @@ async function openGame(encodedName, routeOnly=false){
     renderHomeSections();
 }
 async function closeGame(updateHistory=true){
+    ++gameOpenSequence;
+    if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
     await saveCurrentGameProgress();
     stopGameAutosave();
     window.clearTimeout(window.matrixGameChromeTimer);
