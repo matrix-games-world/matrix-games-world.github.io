@@ -1933,6 +1933,17 @@ async function restoreCurrentGameProgress(manual=false){
         }
 
         const data=snap.data()||{};
+
+        // عند الاستعادة اليدوية، أزل تغييرات الجلسة الحالية وارجع لخط الأساس
+        // أولًا، ثم طبّق الحفظ الموجود في الحساب حتى لا تبقى مفاتيح أحدث غير محفوظة.
+        if(manual){
+            const currentLocal=captureStorage(window.localStorage);
+            const currentSession=captureStorage(window.sessionStorage);
+            applyStorageDiff(window.localStorage,storageDiff(currentLocal,activeGameLocalBaseline||{}));
+            applyStorageDiff(window.sessionStorage,storageDiff(currentSession,activeGameSessionBaseline||{}));
+            try{window.localStorage.removeItem("__MATRIX_GAME_STATE__");}catch(e){}
+        }
+
         activeGameExplicitState=data.explicitState===undefined?null:data.explicitState;
 
         // يدعم الحفظ الجديد الكامل، والنسخة السابقة التي كانت تعتمد على Diff.
@@ -1985,7 +1996,11 @@ async function restoreGameProgressFromAccount(){
     try{
         setGameSaveStatus("جاري استعادة التقدم من حسابك...");
         const restored=await restoreCurrentGameProgress(true);
-        if(!restored)return;
+        if(!restored){
+            // الاستعادة لم تتم (مثل عدم وجود حفظ)، فاستأنف الحفظ التلقائي للجلسة الحالية.
+            startGameAutosave();
+            return;
+        }
 
         // ثبّت بصمة الحفظ الحالية حتى لا يكتب الحفظ التلقائي بيانات مختلفة أثناء إعادة التحميل.
         const localDiff=storageDiff(activeGameLocalBaseline||{},captureStorage(window.localStorage));
