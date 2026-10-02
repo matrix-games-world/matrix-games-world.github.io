@@ -2333,6 +2333,7 @@ async function openGame(encodedName, routeOnly=false){
         if(openToken!==gameOpenSequence)return;
         if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
         hideGameLoading();
+        setGameSaveStatus("");
         startGameAutosave();
         // الحفظ المستمر يبدأ بعد تحميل اللعبة واستخدام البيانات المسترجعة.
     };
