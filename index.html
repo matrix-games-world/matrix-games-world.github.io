@@ -326,8 +326,8 @@ iframe{width:100%;height:100%;border:none}
     padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer
 }
 .player-action:hover{border-color:#00ff66}
-.restore-btn{background:#102c18;border-color:#247c43;color:#baffcc}
-.restore-btn:hover{background:#164126;border-color:#00ff66}
+.sync-btn{background:#102c18;border-color:#247c43;color:#baffcc}
+.sync-btn:hover{background:#164126;border-color:#00ff66}
 .game-player-actions{flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:600px){
     .game-player-header{align-items:flex-start;flex-direction:column}
@@ -897,7 +897,7 @@ iframe{width:100%;height:100%;border:none}
                 </div>
                 <div class="game-player-actions">
                     <button id="game-save-btn" class="player-action save-btn" onclick="saveCurrentGameProgress(true)">💾 حفظ التقدم</button>
-                    <button id="game-restore-btn" class="player-action restore-btn" onclick="restoreGameProgressFromAccount()">↩️ استعادة التقدم</button>
+                    <button id="game-sync-btn" class="player-action sync-btn" onclick="restoreGameProgressFromAccount()">🔄 مزامنة التقدم</button>
                 </div>
             </div>
 
@@ -1989,7 +1989,7 @@ async function restoreGameProgressFromAccount(){
     const confirmed=window.confirm("استعادة التقدم المحفوظ ستعيد تحميل اللعبة وقد تستبدل تقدمك الحالي غير المحفوظ. هل تريد المتابعة؟");
     if(!confirmed)return;
 
-    const restoreBtn=document.getElementById("game-restore-btn");
+    const restoreBtn=document.getElementById("game-sync-btn");
     if(restoreBtn)restoreBtn.disabled=true;
     stopGameAutosave();
 
