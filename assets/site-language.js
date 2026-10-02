@@ -6,7 +6,7 @@ const C={
  ar:{
   search:"🔍 ابحث عن لعبة أو اسم...",admin:"لوحة الأدمن ⚙️",login:"تسجيل الدخول 🎮",logout:"خروج",
   hero:"اكتشف أكثر من 300 لعبة مجانية والعب مباشرة من المتصفح — أكشن، رياضة، ألغاز، رعب، مغامرات وألعاب لاعبين.",games:"🎮 كل الألعاب",
-  back:"← رجوع",save:"💾 حفظ التقدم",restore:"↩️ استعادة التقدم",full:"ملء الشاشة ⛶",related:"ألعاب مشابهة",gameNow:"اللعبة الآن",details:"تفاصيل اللعبة",favorite:"المفضلة",
+  back:"← رجوع",save:"💾 حفظ التقدم",restore:"🔄 مزامنة التقدم",full:"ملء الشاشة ⛶",related:"ألعاب مشابهة",gameNow:"اللعبة الآن",details:"تفاصيل اللعبة",favorite:"المفضلة",
   loginTitle:"تسجيل دخول عالم Matrix Games: The World",loginHint:"بعد تسجيل الدخول، بعض ميزات الموقع يمكن ربطها بحسابك.",
   register:"إنشاء حساب لاعب جديد",switchIn:"تمتلك حسابًا بالفعل؟ تسجيل دخول",switchOut:"لا تملك حسابًا؟ إنشاء حساب لاعب جديد",or:"أو",
   about:"عن Matrix Games",docs:"التوثيق والمساعدة",legal:"الخصوصية والاستخدام",community:"الموقع والخدمات",
@@ -22,7 +22,7 @@ const C={
  en:{
   search:"🔍 Search for a game or title...",admin:"Admin Panel ⚙️",login:"Sign in 🎮",logout:"Log out",
   hero:"Discover 300+ free games and play directly in your browser — action, sports, puzzles, horror, adventures, and 2-player games.",games:"🎮 All Games",
-  back:"← Back",save:"💾 Save Progress",restore:"↩️ Restore Progress",full:"Fullscreen ⛶",related:"Similar Games",gameNow:"Now Playing",details:"Game Details",favorite:"Favorites",
+  back:"← Back",save:"💾 Save Progress",restore:"🔄 Sync Progress",full:"Fullscreen ⛶",related:"Similar Games",gameNow:"Now Playing",details:"Game Details",favorite:"Favorites",
   loginTitle:"Sign in to Matrix Games: The World",loginHint:"Signing in is optional for some site features.",
   register:"Create a player account",switchIn:"Already have an account? Sign in",switchOut:"New here? Create a player account",or:"OR",
   about:"About Matrix Games",docs:"Documentation & Help",legal:"Privacy & Terms",community:"Site & Services",
