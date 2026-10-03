@@ -194,18 +194,32 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
         style.id='matrix-player-fit-style';
         style.textContent=`
           html,body{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important;}
-          body{display:flex!important;align-items:center!important;justify-content:center!important;}
-          body>iframe,body>embed,body>object{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;border:0!important;margin:0!important;}
-          canvas{max-width:100%!important;max-height:100%!important;object-fit:contain!important;}
-          video{max-width:100%!important;max-height:100%!important;object-fit:contain!important;}
-          #gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{max-width:100%!important;max-height:100%!important;margin-left:auto!important;margin-right:auto!important;}
+          body{display:block!important;position:relative!important;}
+          body>iframe,body>embed,body>object{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border:0!important;margin:0!important;}
+          canvas,video{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;}
+          #gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;}
         `;
         (doc.head||doc.documentElement).appendChild(style);
       }
-      doc.querySelectorAll('canvas').forEach(function(canvas){
-        canvas.style.setProperty('max-width','100%','important');
-        canvas.style.setProperty('max-height','100%','important');
-        canvas.style.setProperty('object-fit','contain','important');
+      doc.querySelectorAll('canvas,video').forEach(function(media){
+        media.style.setProperty('display','block','important');
+        media.style.setProperty('width','100%','important');
+        media.style.setProperty('height','100%','important');
+        media.style.setProperty('max-width','none','important');
+        media.style.setProperty('max-height','none','important');
+        media.style.setProperty('object-fit','contain','important');
+        // Stretch the ancestor chain so fixed-size game canvases do not sit tiny in a large black page.
+        let parent=media.parentElement;
+        let depth=0;
+        while(parent && parent!==doc.body && depth<8){
+          parent.style.setProperty('width','100%','important');
+          parent.style.setProperty('height','100%','important');
+          parent.style.setProperty('max-width','none','important');
+          parent.style.setProperty('max-height','none','important');
+          parent.style.setProperty('margin','0','important');
+          parent=parent.parentElement;
+          depth++;
+        }
       });
       Array.from(doc.querySelectorAll('iframe')).forEach(function(inner){
         inner.style.setProperty('width','100%','important');
