@@ -36,10 +36,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 #controls-visibility-toggle{position:relative;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;display:flex;align-items:center;justify-content:center;z-index:32;pointer-events:auto;touch-action:manipulation;border:1px solid rgba(116,255,165,.92);border-radius:11px;color:#caffd9;background:linear-gradient(150deg,rgba(22,88,43,.99),rgba(1,18,7,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -2px 0 rgba(0,0,0,.45),0 2px 0 rgba(0,90,38,.85),0 0 11px rgba(0,255,102,.2);font-size:17px;font-weight:900;line-height:1}
 #controls-visibility-toggle:active{transform:translateY(1px);background:#08702b}
 #controls-visibility-toggle .triangle{display:block;transition:transform .18s ease}
-/* عند الإخفاء يبقى زر المثلث فقط من واجهة اللاعب، وتظل اللعبة نفسها ظاهرة. */
+/* مربع الصح داخل الترس يتحكم في لوحة الأسهم وSPACE فقط. */
 body.controls-hidden #dpad,body.controls-hidden #space-control{display:none!important}
-body.controls-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
-body.controls-hidden #settings-panel,body.controls-hidden .tools-panel{display:none!important}
+/* المثلث العلوي يخفي أدوات الشريط فقط؛ لا يخفي لوحة الحركة أو SPACE. */
+body.toolbar-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
+body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:none!important}
 
 #dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(178px * var(--arrow-size));height:calc(192px * var(--arrow-size));pointer-events:auto;touch-action:none;filter:drop-shadow(0 7px 10px rgba(0,0,0,.42))}
 .drag-handle{height:27px;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,255,102,.7);border-radius:12px 12px 0 0;background:linear-gradient(180deg,rgba(25,78,41,.97),rgba(2,22,8,.97));color:#c6ffda;font-size:11px;letter-spacing:.2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.13)}
@@ -226,20 +227,29 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   function applyControlSettings(){
     document.documentElement.style.setProperty('--arrow-size',arrowSizeInput.value);
     document.documentElement.style.setProperty('--space-size',spaceSizeInput.value);
+    // علامة الصح في الترس تتحكم في الأسهم وSPACE فقط.
     document.body.classList.toggle('controls-hidden',!showControlsInput.checked);
-    const toggle=document.getElementById('controls-visibility-toggle');
-    if(toggle){
-      toggle.setAttribute('aria-pressed',String(!showControlsInput.checked));
-      toggle.setAttribute('aria-label',showControlsInput.checked?'إخفاء كل أزرار الواجهة':'إظهار أزرار الواجهة');
-      toggle.title=showControlsInput.checked?'إخفاء كل أزرار الواجهة':'إظهار أزرار الواجهة';
-      toggle.querySelector('.triangle').textContent=showControlsInput.checked?'◀':'▶';
-    }
     try{localStorage.setItem('matrix.player.controls',String(showControlsInput.checked));localStorage.setItem('matrix.player.arrowSize',arrowSizeInput.value);localStorage.setItem('matrix.player.spaceSize',spaceSizeInput.value);}catch(e){}
+  }
+  function setToolbarHidden(hidden){
+    const shouldHide=!!hidden;
+    document.body.classList.toggle('toolbar-hidden',shouldHide);
+    const toggle=document.getElementById('controls-visibility-toggle');
+    toggle.setAttribute('aria-pressed',String(shouldHide));
+    toggle.setAttribute('aria-label',shouldHide?'إظهار أدوات الشريط العلوي':'إخفاء أدوات الشريط العلوي');
+    toggle.title=shouldHide?'إظهار أدوات الشريط العلوي':'إخفاء أدوات الشريط العلوي';
+    toggle.querySelector('.triangle').textContent=shouldHide?'▶':'◀';
+    if(shouldHide){
+      settingsPanel.classList.remove('open');
+      toolsPanel.classList.remove('open');
+      settingsToggle.setAttribute('aria-expanded','false');
+      toolsToggle.setAttribute('aria-expanded','false');
+    }
+    try{localStorage.setItem('matrix.player.toolbarHidden',String(shouldHide));}catch(e){}
   }
   document.getElementById('controls-visibility-toggle').addEventListener('click',function(e){
     e.preventDefault();e.stopPropagation();
-    showControlsInput.checked=!showControlsInput.checked;
-    applyControlSettings();
+    setToolbarHidden(!document.body.classList.contains('toolbar-hidden'));
   });
   showControlsInput.addEventListener('change',applyControlSettings);
   arrowSizeInput.addEventListener('input',applyControlSettings);
@@ -288,6 +298,9 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     [dpad,spaceControl].forEach(function(el){const r=el.getBoundingClientRect();clampPosition(el,r.left,r.top);});
   });
   loadSettings();
+  let savedToolbarHidden=false;
+  try{savedToolbarHidden=localStorage.getItem('matrix.player.toolbarHidden')==='true';}catch(e){}
+  setToolbarHidden(savedToolbarHidden);
 })();
 </script>
 </body>
