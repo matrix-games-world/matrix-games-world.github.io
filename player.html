@@ -21,7 +21,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 #game-frame{position:relative;top:auto;left:auto;right:auto;bottom:auto;display:block;grid-column:2;width:100%;height:min(64vh,620px);min-width:0;margin:0 auto;border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
 .related-rail{display:flex;flex-direction:column;gap:9px;min-width:0;align-self:stretch;overflow:hidden}
 .related-rail-title{margin:0 0 2px;color:#83ffad;font-size:12px;text-align:center;font-weight:800}
-.related-game-tile{width:100%;min-width:0;padding:10px 6px;border:1px solid rgba(0,255,102,.45);border-radius:11px;background:linear-gradient(150deg,rgba(6,29,12,.98),rgba(1,9,3,.99));color:#eaffef;text-align:center;cursor:pointer;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.related-game-tile{display:flex;flex-direction:column;align-items:stretch;width:100%;min-width:0;padding:0;border:1px solid rgba(0,255,102,.45);border-radius:11px;background:linear-gradient(150deg,rgba(6,29,12,.98),rgba(1,9,3,.99));color:#eaffef;text-align:center;cursor:pointer;font-size:11px;line-height:1.4;overflow:hidden;overflow-wrap:anywhere}
+.related-game-thumb{display:block;width:100%;height:82px;flex:0 0 82px;object-fit:cover;background:#061006;border:0;border-bottom:1px solid rgba(0,255,102,.28)}
+.related-game-copy{display:block;padding:7px 6px 8px}
+.related-game-title{display:block;font-size:11px;line-height:1.35;font-weight:800;color:#eaffef}
 .related-game-tile small{display:block;margin-top:4px;color:#8fc99d;font-size:10px}
 .related-game-tile:active{background:#0b4820;border-color:#00ff66}
 #game-about-card{position:relative;top:auto;left:auto;right:auto;width:calc(100% - 16px);min-height:96px;margin:12px auto 0;padding:14px 16px;display:block;z-index:2;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08);direction:rtl}
@@ -77,7 +80,7 @@ body.controls-hidden #dpad,body.controls-hidden #space-control{display:none!impo
 body.toolbar-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
 /* Keep the triangle handle accessible even when the game is fullscreen. */
 body.player-fullscreen #top-actions{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:auto;z-index:100;pointer-events:none}
-body.player-fullscreen #controls-visibility-toggle{display:flex!important;position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:auto;z-index:101;pointer-events:auto}
+body.player-fullscreen #controls-visibility-toggle{display:flex!important;visibility:visible!important;opacity:1!important;position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:8px!important;right:auto!important;z-index:2147483647!important;pointer-events:auto!important}
 body.player-fullscreen.toolbar-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
 body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:none!important}
 
@@ -196,6 +199,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     <div id="related-games-list"></div>
   </section>
 </div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 (function(){
   'use strict';
@@ -231,6 +236,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   const relatedConfirmYes = document.getElementById('related-confirm-yes');
   const relatedConfirmNo = document.getElementById('related-confirm-no');
   let pendingRelatedGame = '';
+  const PLAYER_GAME_IMAGES = Object.create(null);
+  let playerImageDbPromise = null;
   const loginAccountButton = document.getElementById('login-account');
   const logoutAccountButton = document.getElementById('logout-account');
   let isFullscreen = false;
@@ -304,16 +311,74 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     if(actualDescription) gameDescriptionElement.textContent=actualDescription.replace(/\\s+/g,' ');
     updateGameDetails(actualDescription,actualHowto);
   }
+  function escapePlayerHtml(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+  function generatedRelatedPoster(name,category){
+    const title=escapePlayerHtml(prettyGameName(name));
+    const cat=escapePlayerHtml(category||'أخرى');
+    const hash=Array.from(String(name)).reduce((h,ch)=>((h*31)+ch.charCodeAt(0))>>>0,7);
+    const palettes=[['#03140a','#00ff66','#a5ffc2'],['#07152a','#24b7ff','#b8e7ff'],['#1b0a2e','#bb6cff','#ffd3ff'],['#250a0a','#ff4d6d','#ffd1d9'],['#211707','#ffb000','#ffe7a8']];
+    const pal=palettes[hash%palettes.length];
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+pal[0]+'"/><stop offset="1" stop-color="#010301"/></linearGradient></defs><rect width="640" height="360" rx="24" fill="url(#g)"/><rect x="12" y="12" width="616" height="336" rx="20" fill="none" stroke="'+pal[1]+'" stroke-width="3" opacity=".8"/><circle cx="530" cy="80" r="52" fill="'+pal[1]+'" opacity=".13"/><path d="M35 278 L605 278" stroke="'+pal[2]+'" stroke-width="2" opacity=".4"/><text x="320" y="154" text-anchor="middle" fill="'+pal[2]+'" font-family="Arial,sans-serif" font-size="27" font-weight="800">'+title.slice(0,46)+'</text><text x="320" y="202" text-anchor="middle" fill="'+pal[1]+'" font-family="Arial,sans-serif" font-size="21" font-weight="700">'+cat+'</text><text x="320" y="320" text-anchor="middle" fill="#d7ffe4" font-family="Arial,sans-serif" font-size="19" font-weight="800">MATRIX GAMES</text></svg>';
+    return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  }
+  window.matrixRelatedImageFallback=function(img){
+    if(!img)return;
+    img.onerror=null;
+    img.src=generatedRelatedPoster(img.getAttribute('data-game-name')||'',img.getAttribute('data-game-category')||'أخرى');
+  };
   function renderRelatedGames(){
     const category=getPlayerGameCategory(activeGameName);
     const related=PLAYER_GAME_NAMES.filter(name=>name!==activeGameName && getPlayerGameCategory(name)===category).slice(0,6);
-    const makeTile=name=>'<button type="button" class="related-game-tile" data-related-game="'+encodeURIComponent(name)+'">'+prettyGameName(name)+'<small>'+category+'</small></button>';
+    const makeTile=name=>{
+      const title=prettyGameName(name);
+      const safeName=escapePlayerHtml(encodeURIComponent(name));
+      const safeTitle=escapePlayerHtml(title);
+      const safeCategory=escapePlayerHtml(category);
+      const safeImage=escapePlayerHtml(PLAYER_GAME_IMAGES[name]||generatedRelatedPoster(name,category));
+      return '<button type="button" class="related-game-tile" data-related-game="'+safeName+'" aria-label="فتح لعبة '+safeTitle+'">'+
+        '<img class="related-game-thumb" loading="lazy" decoding="async" src="'+safeImage+'" data-game-name="'+safeName+'" data-game-category="'+safeCategory+'" alt="'+safeTitle+'" onerror="window.matrixRelatedImageFallback(this)">'+
+        '<span class="related-game-copy"><span class="related-game-title">'+safeTitle+'</span><small>'+safeCategory+'</small></span>'+
+      '</button>';
+    };
     if(relatedLeft) relatedLeft.innerHTML='<h3 class="related-rail-title">من نفس التصنيف</h3>'+related.slice(0,3).map(makeTile).join('');
     if(relatedRight) relatedRight.innerHTML='<h3 class="related-rail-title">ألعاب أخرى</h3>'+related.slice(3,6).map(makeTile).join('');
     if(relatedMobileList) relatedMobileList.innerHTML=related.length?related.map(makeTile).join(''):'<p>لا توجد ألعاب أخرى في هذا التصنيف حاليًا.</p>';
     document.querySelectorAll('[data-related-game]').forEach(button=>{
       button.addEventListener('click',function(){openRelatedConfirmation(this.getAttribute('data-related-game'));});
     });
+  }
+  function loadRelatedGameImages(){
+    if(playerImageDbPromise)return playerImageDbPromise;
+    playerImageDbPromise=(async function(){
+      try{
+        if(!window.firebase || !firebase.firestore) return;
+        const config={
+          apiKey:"AIzaSyDJZBVpfuTCeTKk4ml4SRvo7BrQnMh4QEE",
+          authDomain:"matrix-database-b13f3.firebaseapp.com",
+          projectId:"matrix-database-b13f3",
+          storageBucket:"matrix-database-b13f3.firebasestorage.app",
+          messagingSenderId:"98576605408",
+          appId:"1:98576605408:web:80fafe3a94d0406a6b7085",
+          measurementId:"G-DSEEFT7QJB"
+        };
+        const app=firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(config);
+        const db=app.firestore();
+        const snap=await db.collection("games").where("source","==","local").get();
+        snap.forEach(doc=>{
+          const data=doc.data()||{};
+          if(data.name && data.image) PLAYER_GAME_IMAGES[data.name]=data.image;
+        });
+      }catch(e){
+        console.warn("Related game thumbnails could not be loaded from Firebase:",e);
+      }finally{
+        renderRelatedGames();
+      }
+    })();
+    return playerImageDbPromise;
   }
   function openRelatedConfirmation(name){
     pendingRelatedGame=name;
@@ -362,6 +427,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     updateGameHeading();
     renderRelatedGames();
   });
+  renderRelatedGames();
+  loadRelatedGameImages();
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
   frame.src = '/offline/' + encodeURIComponent(activeGameName) + '.html';
 
