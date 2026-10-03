@@ -17,6 +17,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 #game-heading-copy{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;direction:rtl;text-align:center}
 #game-title{margin:0;max-width:100%;font-size:16px;line-height:1.25;font-weight:800;color:#eaffef;white-space:normal;overflow-wrap:anywhere;text-shadow:0 0 8px rgba(0,255,102,.17)}
 #game-description{margin:0;max-width:100%;font-size:12px;line-height:1.4;font-weight:500;color:#c0e8cb;white-space:normal;overflow-wrap:anywhere;text-align:center}
+#game-about-card{position:absolute;top:390px;left:8px;right:8px;min-height:70px;padding:9px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:8;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08);pointer-events:none}
+#game-about-logo{width:34px;height:34px;flex:0 0 34px;object-fit:cover;border:1px solid rgba(0,255,102,.6);border-radius:8px}
+#game-about-copy{min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;direction:rtl;text-align:center}
+#game-about-title{margin:0;color:#eaffef;font-size:13px;font-weight:800}
+#game-about-description{margin:0;color:#bfe8ca;font-size:11px;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+
 body.player-fullscreen #game-heading{display:none}
 #player-ui{position:absolute;inset:0;z-index:20;pointer-events:none}
 .ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle,.tools-panel,.menu-action{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -94,6 +100,13 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
         <p id="game-description">تحميل معلومات اللعبة...</p>
       </div>
     </div>
+    <div id="game-about-card" aria-live="polite">
+      <img id="game-about-logo" src="/assets/matrix-logo-192.jpg" alt="Matrix Games" onerror="this.onerror=null;this.src='/assets/matrix-favicon-48.png'">
+      <div id="game-about-copy">
+        <h2 id="game-about-title">عن اللعبة</h2>
+        <p id="game-about-description">تعرف على اللعبة واستمتع بها على Matrix Games.</p>
+      </div>
+    </div>
     <div class="tools-panel" id="tools-panel" aria-label="أدوات اللعبة">
       <div class="tools-title">أدوات اللعبة</div>
       <div class="tools-grid">
@@ -159,6 +172,9 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   const exitConfirmNo = document.getElementById('exit-confirm-no');
   const gameTitleElement = document.getElementById('game-title');
   const gameDescriptionElement = document.getElementById('game-description');
+  const gameAboutCard = document.getElementById('game-about-card');
+  const gameAboutTitle = document.getElementById('game-about-title');
+  const gameAboutDescription = document.getElementById('game-about-description');
   const loginAccountButton = document.getElementById('login-account');
   const logoutAccountButton = document.getElementById('logout-account');
   let isFullscreen = false;
@@ -195,6 +211,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     }catch(e){
       // بعض الألعاب قد تنتقل إلى نطاق خارجي؛ نحتفظ بالاسم والوصف الاحتياطيين.
     }
+    if(gameAboutTitle) gameAboutTitle.textContent=gameTitleElement.textContent || 'عن اللعبة';
+    if(gameAboutDescription) gameAboutDescription.textContent=gameDescriptionElement.textContent || 'العب واستمتع على Matrix Games.';
   }
   // Unity يستدعي هذه الدالة بعد تسجيل الدخول أو الخروج، من دون إعادة تحميل اللعبة.
   window.matrixSetSignedIn=function(signedIn){
@@ -208,9 +226,83 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   }
   gameTitleElement.textContent=prettyGameName(gameName) || 'Matrix Games';
   gameDescriptionElement.textContent='العب ' + (prettyGameName(gameName) || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
+  function centerAndScaleGameContent(doc){
+    if(!doc) return;
+    try{
+      if(!doc.getElementById('matrix-player-layout-style')){
+        const style=doc.createElement('style');
+        style.id='matrix-player-layout-style';
+        style.textContent=`
+          html,body{width:100%!important;min-width:0!important;margin:0!important;overflow-x:hidden!important;}
+          body{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;}
+          body>main,body>section,body>div,body>canvas,body>iframe{margin-left:auto!important;margin-right:auto!important;max-width:100%!important;}
+          canvas,video{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:calc(100vh - 270px)!important;object-fit:contain!important;margin-left:auto!important;margin-right:auto!important;}
+          `;
+        (doc.head||doc.documentElement).appendChild(style);
+      }
+      const visuals=Array.from(doc.querySelectorAll('canvas,video,iframe,embed,object'))
+        .filter(function(el){const r=el.getBoundingClientRect();return r.width>40&&r.height>30;})
+        .sort(function(a,b){
+          const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();
+          return (rb.width*rb.height)-(ra.width*ra.height);
+        });
+      const visual=visuals[0];
+      if(visual && visual.tagName!=='IFRAME' && visual.tagName!=='EMBED' && visual.tagName!=='OBJECT'){
+        visual.style.setProperty('display','block','important');
+        visual.style.setProperty('width','100%','important');
+        visual.style.setProperty('height','auto','important');
+        visual.style.setProperty('max-width','100%','important');
+        visual.style.setProperty('max-height','calc(100vh - 270px)','important');
+        visual.style.setProperty('object-fit','contain','important');
+        let parent=visual.parentElement,depth=0;
+        while(parent && parent!==doc.body && depth<8){
+          parent.style.setProperty('width','100%','important');
+          parent.style.setProperty('height','auto','important');
+          parent.style.setProperty('max-width','100%','important');
+          parent.style.setProperty('margin-left','auto','important');
+          parent.style.setProperty('margin-right','auto','important');
+          parent=parent.parentElement;depth++;
+        }
+      } else if(visual){
+        visual.style.setProperty('display','block','important');
+        visual.style.setProperty('width','100%','important');
+        visual.style.setProperty('max-width','100%','important');
+        visual.style.setProperty('margin-left','auto','important');
+        visual.style.setProperty('margin-right','auto','important');
+      }
+    }catch(e){}
+  }
+  function positionGameAboutCard(){
+    if(!gameAboutCard || document.body.classList.contains('player-fullscreen')) return;
+    let top=390;
+    try{
+      const doc=frame.contentDocument;
+      const frameRect=frame.getBoundingClientRect();
+      if(doc){
+        const candidates=Array.from(doc.querySelectorAll('canvas,video,iframe,embed,object'))
+          .filter(function(el){const r=el.getBoundingClientRect();return r.width>40&&r.height>30;})
+          .sort(function(a,b){const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();return (rb.width*rb.height)-(ra.width*ra.height);});
+        if(candidates.length){
+          const r=candidates[0].getBoundingClientRect();
+          top=frameRect.top+r.bottom+12;
+        }else{
+          top=frameRect.top+Math.min(300,window.innerHeight*0.34);
+        }
+      }
+    }catch(e){}
+    const cardHeight=gameAboutCard.offsetHeight||75;
+    top=Math.max(frame.offsetTop+180,Math.min(top,window.innerHeight-cardHeight-8));
+    gameAboutCard.style.top=top+'px';
+  }
   frame.addEventListener('load',function(){
     message.classList.remove('show');
     updateGameHeading();
+    centerAndScaleGameContent(frame.contentDocument);
+    [200,600,1200].forEach(function(delay){setTimeout(function(){
+      centerAndScaleGameContent(frame.contentDocument);
+      positionGameAboutCard();
+    },delay);});
+    positionGameAboutCard();
   });
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
   frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
@@ -500,6 +592,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   toolsToggle.addEventListener('contextmenu',function(e){e.preventDefault();unityCall('matrix_back');});
   window.addEventListener('resize',function(){
     [dpad,spaceControl].forEach(function(el){const r=el.getBoundingClientRect();clampPosition(el,r.left,r.top);});
+    centerAndScaleGameContent(frame.contentDocument);
+    positionGameAboutCard();
   });
   loadSettings();
   let savedToolbarHidden=false;
