@@ -219,6 +219,11 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
           body{display:block!important;position:relative!important;}
           body>iframe,body>embed,body>object{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border:0!important;margin:0!important;}
           canvas,video{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;}
+          /* GameMaker HTML5 titles (including Bacon May Die): resize the actual game canvas, not only its outer iframe. */
+          html:has(#gm4html5_div_id),body:has(#gm4html5_div_id){width:100%!important;height:100%!important;overflow:hidden!important;}
+          body#body:has(#gm4html5_div_id){position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+          #gm4html5_div_id{position:absolute!important;inset:0!important;width:100vw!important;height:100vh!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+          #gm4html5_div_id #canvas,#canvas{display:block!important;width:min(100vw,177.7778vh)!important;height:min(56.25vw,100vh)!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:fill!important;}
           body>div:only-child,body>main:only-child,body>section:only-child,div:has(>canvas),div:has(>iframe),div:has(canvas),div:has(iframe),#gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;}
           html,body,*{box-sizing:border-box!important;}
         `;
@@ -277,12 +282,57 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       }
     }catch(e){}
   }
+  function refreshEmbeddedGameLayout(){
+    try{
+      const doc=frame.contentDocument;
+      if(!doc) return false;
+      fitGameDocument(doc);
+      const canvas=doc.getElementById('canvas');
+      const gmRoot=doc.getElementById('gm4html5_div_id');
+      if(canvas && gmRoot){
+        // Apply sizing directly to Bacon May Die's real GameMaker canvas after its document.write().
+        if(!doc.getElementById('matrix-bacon-canvas-fit')){
+          const fitStyle=doc.createElement('style');
+          fitStyle.id='matrix-bacon-canvas-fit';
+          fitStyle.textContent=`
+            html,body,#body{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+            #body{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+            #gm4html5_div_id{position:absolute!important;inset:0!important;width:100vw!important;height:100vh!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+            #gm4html5_div_id #canvas{display:block!important;width:min(100vw,177.7778vh)!important;height:min(56.25vw,100vh)!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:fill!important;}
+          `;
+          (doc.head||doc.documentElement).appendChild(fitStyle);
+        }
+        canvas.style.setProperty('display','block','important');
+        canvas.style.setProperty('width','min(100vw, 177.7778vh)','important');
+        canvas.style.setProperty('height','min(56.25vw, 100vh)','important');
+        canvas.style.setProperty('max-width','none','important');
+        canvas.style.setProperty('max-height','none','important');
+        gmRoot.style.setProperty('position','absolute','important');
+        gmRoot.style.setProperty('inset','0','important');
+        gmRoot.style.setProperty('width','100vw','important');
+        gmRoot.style.setProperty('height','100vh','important');
+        gmRoot.style.setProperty('display','flex','important');
+        gmRoot.style.setProperty('align-items','center','important');
+        gmRoot.style.setProperty('justify-content','center','important');
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
   frame.addEventListener('load',function(){
     message.classList.remove('show');
     updateGameHeading();
     fitGameDocument(frame.contentDocument);
-    // بعض الألعاب تنشئ الـ canvas أو الإطار الداخلي بعد حدث load.
-    [250,800,1600].forEach(function(delay){setTimeout(function(){try{fitGameDocument(frame.contentDocument);}catch(e){}},delay);});
+    refreshEmbeddedGameLayout();
+    // Bacon May Die writes its GameMaker page after initial loading; keep applying sizing until its real canvas appears.
+    [250,500,800,1200,1800,2600,4000,6000,9000,12000].forEach(function(delay){
+      setTimeout(function(){refreshEmbeddedGameLayout();},delay);
+    });
+    let attempts=0;
+    const fitTimer=setInterval(function(){
+      attempts++;
+      if(refreshEmbeddedGameLayout() || attempts>=50) clearInterval(fitTimer);
+    },250);
   });
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
   frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
