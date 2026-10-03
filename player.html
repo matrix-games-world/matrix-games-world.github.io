@@ -75,6 +75,10 @@ body.player-fullscreen #game-heading{display:none}
 body.controls-hidden #dpad,body.controls-hidden #space-control{display:none!important}
 /* المثلث العلوي يخفي أدوات الشريط فقط؛ لا يخفي لوحة الحركة أو SPACE. */
 body.toolbar-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
+/* Keep the triangle handle accessible even when the game is fullscreen. */
+body.player-fullscreen #top-actions{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:auto;z-index:100;pointer-events:none}
+body.player-fullscreen #controls-visibility-toggle{display:flex!important;position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:auto;z-index:101;pointer-events:auto}
+body.player-fullscreen.toolbar-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
 body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:none!important}
 
 #dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(178px * var(--arrow-size));height:calc(192px * var(--arrow-size));pointer-events:auto;touch-action:none;filter:drop-shadow(0 7px 10px rgba(0,0,0,.42))}
