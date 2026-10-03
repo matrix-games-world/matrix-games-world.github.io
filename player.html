@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#061006">
+<title>Matrix Games Player</title>
+<style>
+:root{--neon:#00ff66;--panel:rgba(3,18,7,.88);--line:rgba(0,255,102,.9);--arrow-size:1;--space-size:1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
+#player{position:fixed;inset:0;background:#020602;overflow:hidden}
+#game-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:1}
+#player-ui{position:absolute;inset:0;z-index:20;pointer-events:none}
+.ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:none}
+.ui-button,.settings-toggle{border:1px solid var(--line);color:var(--neon);background:var(--panel);box-shadow:0 0 9px rgba(0,255,102,.18);border-radius:9px;font-weight:700;font-size:14px;min-height:39px;padding:7px 11px}
+#top-actions{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;display:flex;gap:7px;direction:rtl}
+#settings-toggle{min-width:42px;font-size:18px}
+#settings-panel{display:none;position:absolute;top:calc(env(safe-area-inset-top,0px) + 53px);right:8px;width:min(290px,calc(100vw - 16px));padding:12px;background:rgba(2,14,5,.97);border:1px solid var(--neon);border-radius:12px;box-shadow:0 0 18px rgba(0,255,102,.15);pointer-events:auto;font-size:14px}
+#settings-panel.open{display:block}
+.settings-title{font-weight:700;color:var(--neon);margin-bottom:10px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}
+.settings-row label{flex:1}
+.settings-row input[type=range]{width:48%;accent-color:var(--neon)}
+#show-controls{accent-color:var(--neon);width:18px;height:18px}
+#touch-layer{position:absolute;inset:0;pointer-events:none}
+#dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(170px * var(--arrow-size));height:calc(184px * var(--arrow-size));pointer-events:auto;touch-action:none}
+.drag-handle{height:27px;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,255,102,.65);border-radius:8px 8px 0 0;background:rgba(0,25,8,.94);color:#a8ffc5;font-size:11px;letter-spacing:.2px}
+.dpad-grid{height:calc(100% - 27px);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4px;padding:5px;background:rgba(0,15,4,.73);border:1px solid rgba(0,255,102,.55);border-top:0;border-radius:0 0 9px 9px}
+.control-button{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;color:var(--neon);background:rgba(4,36,12,.94);box-shadow:0 0 7px rgba(0,255,102,.16);font-size:calc(24px * var(--arrow-size));font-weight:800;min-width:0;min-height:0;padding:0;touch-action:none}
+.control-button:active,.ui-button:active,.settings-toggle:active{background:rgba(0,90,28,.98);transform:scale(.97)}
+#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#right{grid-column:3;grid-row:2}#down{grid-column:2;grid-row:3}
+#space-control{position:absolute;right:max(15px,env(safe-area-inset-right,0px));bottom:calc(max(20px,env(safe-area-inset-bottom,0px)) + 12px);width:calc(120px * var(--space-size));height:calc(70px * var(--space-size));display:flex;flex-direction:column;pointer-events:auto;touch-action:none}
+#space-drag{height:22px;border:1px solid rgba(0,255,102,.65);border-bottom:0;background:rgba(0,25,8,.94);border-radius:8px 8px 0 0;color:#a8ffc5;font-size:10px;display:flex;align-items:center;justify-content:center}
+#space-key{flex:1;border-radius:0 0 9px 9px;font-size:calc(15px * var(--space-size));letter-spacing:1px}
+#game-message{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(0,0,0,.88);color:#d9ffe5;font-size:16px;line-height:1.7;pointer-events:auto}
+#game-message.show{display:flex}
+body.controls-hidden #dpad,body.controls-hidden #space-control{display:none}
+body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 52px)}
+@media (max-width:520px){#dpad{width:calc(150px * var(--arrow-size));height:calc(164px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px)}.ui-button,.settings-toggle{font-size:12px;padding:6px 8px}}
+</style>
+</head>
+<body>
+<div id="player">
+  <iframe id="game-frame" title="Matrix Games game" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  <div id="player-ui">
+    <div id="top-actions">
+      <button class="ui-button" id="back-to-list">↩ خروج</button>
+      <button class="settings-toggle" id="settings-toggle" aria-label="إعدادات التحكم">⚙</button>
+      <button class="ui-button" id="fullscreen-toggle">⛶ تكبير</button>
+    </div>
+    <div id="settings-panel">
+      <div class="settings-title">إعدادات أزرار التحكم</div>
+      <div class="settings-row"><label for="show-controls">إظهار الأسهم وSPACE</label><input id="show-controls" type="checkbox" checked></div>
+      <div class="settings-row"><label for="arrow-size">حجم الأسهم</label><input id="arrow-size" type="range" min="0.65" max="1.5" step="0.05" value="1"></div>
+      <div class="settings-row"><label for="space-size">حجم SPACE</label><input id="space-size" type="range" min="0.65" max="1.5" step="0.05" value="1"></div>
+      <div style="font-size:11px;color:#b9d9c3;margin-top:8px">اسحب شريط «تحريك» لتحريك الأسهم، وشريط «تحريك SPACE» لتحريك زر المسافة.</div>
+    </div>
+    <div id="touch-layer">
+      <div id="dpad">
+        <div id="dpad-drag" class="drag-handle">⠿ تحريك الأسهم</div>
+        <div class="dpad-grid">
+          <button class="control-button" id="up" data-key="ArrowUp" aria-label="أعلى">▲</button>
+          <button class="control-button" id="left" data-key="ArrowLeft" aria-label="يسار">◀</button>
+          <button class="control-button" id="right" data-key="ArrowRight" aria-label="يمين">▶</button>
+          <button class="control-button" id="down" data-key="ArrowDown" aria-label="أسفل">▼</button>
+        </div>
+      </div>
+      <div id="space-control">
+        <div id="space-drag" class="drag-handle">⠿ تحريك SPACE</div>
+        <button class="control-button" id="space-key" data-key=" ">SPACE</button>
+      </div>
+    </div>
+    <div id="game-message"></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const params = new URLSearchParams(location.search);
+  const gameName = (params.get('game') || '').trim();
+  const frame = document.getElementById('game-frame');
+  const settingsPanel = document.getElementById('settings-panel');
+  const settingsToggle = document.getElementById('settings-toggle');
+  const fullscreenToggle = document.getElementById('fullscreen-toggle');
+  const showControlsInput = document.getElementById('show-controls');
+  const arrowSizeInput = document.getElementById('arrow-size');
+  const spaceSizeInput = document.getElementById('space-size');
+  const message = document.getElementById('game-message');
+  let isFullscreen = false;
+  let heldKeys = new Set();
+
+  function unityCall(msg){try{if(window.Unity && typeof window.Unity.call==='function') window.Unity.call(msg);}catch(e){}}
+  function showMessage(text){message.textContent=text;message.classList.add('show');}
+  if(!gameName || /[\\/]/.test(gameName) || gameName==='.' || gameName==='..'){
+    showMessage('تعذر تحديد اللعبة. ارجع إلى القائمة وافتح اللعبة مرة أخرى.');
+    return;
+  }
+  frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
+  frame.addEventListener('load',function(){message.classList.remove('show');});
+  frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
+
+  function dispatchKeyToWindow(win,key,type){
+    try{
+      const doc=win.document;
+      if(!doc) return;
+      let target=doc.activeElement;
+      if(!target || target===doc.body || target===doc.documentElement){
+        target=doc.querySelector('canvas, input, textarea, button, [tabindex]') || doc.body || doc;
+      }
+      try{if(win.focus) win.focus();}catch(e){}
+      try{if(target && target.focus && target.tagName==='CANVAS') target.focus({preventScroll:true});}catch(e){}
+      const info={key:key,code:key===' '?'Space':key,keyCode:key===' '?32:({ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40}[key]||0),which:key===' '?32:({ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40}[key]||0),bubbles:true,cancelable:true,composed:true,repeat:type==='keydown'&&heldKeys.has(key)};
+      const event=new win.KeyboardEvent(type,info);
+      // بعض ألعاب HTML القديمة تقرأ keyCode/which فقط.
+      const numeric=info.keyCode;
+      try{Object.defineProperty(event,'keyCode',{get:function(){return numeric;}});Object.defineProperty(event,'which',{get:function(){return numeric;}});}catch(e){}
+      (target || doc).dispatchEvent(event);
+    }catch(e){}
+  }
+  function visitFrames(win,key,type,depth){
+    if(depth>5) return;
+    dispatchKeyToWindow(win,key,type);
+    try{
+      const count=win.frames.length;
+      for(let i=0;i<count;i++){
+        try{visitFrames(win.frames[i],key,type,depth+1);}catch(e){}
+      }
+    }catch(e){}
+  }
+  function sendKey(key,type){
+    if(type==='keydown') heldKeys.add(key); else heldKeys.delete(key);
+    try{frame.contentWindow.focus();}catch(e){}
+    try{visitFrames(frame.contentWindow,key,type,0);}catch(e){}
+  }
+  function releaseAllKeys(){Array.from(heldKeys).forEach(k=>sendKey(k,'keyup'));}
+  document.addEventListener('visibilitychange',function(){if(document.hidden)releaseAllKeys();});
+  window.addEventListener('blur',releaseAllKeys);
+  window.addEventListener('pagehide',releaseAllKeys);
+
+  document.querySelectorAll('[data-key]').forEach(function(button){
+    const key=button.getAttribute('data-key');
+    button.addEventListener('contextmenu',e=>e.preventDefault());
+    button.addEventListener('pointerdown',function(e){
+      e.preventDefault();e.stopPropagation();
+      try{button.setPointerCapture(e.pointerId);}catch(ignore){}
+      if(!heldKeys.has(key))sendKey(key,'keydown');
+    });
+    function release(e){if(e){e.preventDefault();e.stopPropagation();}if(heldKeys.has(key))sendKey(key,'keyup');}
+    button.addEventListener('pointerup',release);
+    button.addEventListener('pointercancel',release);
+    button.addEventListener('lostpointercapture',release);
+  });
+
+  function clampPosition(el,left,top){
+    const maxLeft=Math.max(0,window.innerWidth-el.offsetWidth);
+    const maxTop=Math.max(0,window.innerHeight-el.offsetHeight);
+    el.style.left=Math.max(0,Math.min(maxLeft,left))+'px';
+    el.style.top=Math.max(0,Math.min(maxTop,top))+'px';
+    el.style.right='auto';el.style.bottom='auto';
+  }
+  function attachDrag(handle,el,storageKey){
+    let active=null,startX=0,startY=0,origX=0,origY=0,moved=false;
+    handle.addEventListener('pointerdown',function(e){
+      e.preventDefault();e.stopPropagation();
+      const rect=el.getBoundingClientRect();active=e.pointerId;startX=e.clientX;startY=e.clientY;origX=rect.left;origY=rect.top;moved=false;
+      try{handle.setPointerCapture(active);}catch(ignore){}
+    });
+    handle.addEventListener('pointermove',function(e){
+      if(active!==e.pointerId)return;
+      e.preventDefault();
+      if(Math.abs(e.clientX-startX)+Math.abs(e.clientY-startY)>3)moved=true;
+      clampPosition(el,origX+e.clientX-startX,origY+e.clientY-startY);
+    });
+    function end(e){if(active!==null && (!e || e.pointerId===active)){if(moved){try{localStorage.setItem(storageKey,JSON.stringify({left:el.style.left,top:el.style.top}));}catch(ignore){}}active=null;}}
+    handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);handle.addEventListener('lostpointercapture',end);
+  }
+  const dpad=document.getElementById('dpad');
+  const spaceControl=document.getElementById('space-control');
+  attachDrag(document.getElementById('dpad-drag'),dpad,'matrix.player.dpad.position');
+  attachDrag(document.getElementById('space-drag'),spaceControl,'matrix.player.space.position');
+  function restorePosition(el,key){try{const v=JSON.parse(localStorage.getItem(key)||'null');if(v&&v.left&&v.top)clampPosition(el,parseFloat(v.left),parseFloat(v.top));}catch(e){}}
+  function loadSettings(){
+    try{
+      showControlsInput.checked=localStorage.getItem('matrix.player.controls')!=='false';
+      arrowSizeInput.value=localStorage.getItem('matrix.player.arrowSize')||'1';
+      spaceSizeInput.value=localStorage.getItem('matrix.player.spaceSize')||'1';
+    }catch(e){}
+    applyControlSettings();
+    restorePosition(dpad,'matrix.player.dpad.position');
+    restorePosition(spaceControl,'matrix.player.space.position');
+  }
+  function applyControlSettings(){
+    document.documentElement.style.setProperty('--arrow-size',arrowSizeInput.value);
+    document.documentElement.style.setProperty('--space-size',spaceSizeInput.value);
+    document.body.classList.toggle('controls-hidden',!showControlsInput.checked);
+    try{localStorage.setItem('matrix.player.controls',String(showControlsInput.checked));localStorage.setItem('matrix.player.arrowSize',arrowSizeInput.value);localStorage.setItem('matrix.player.spaceSize',spaceSizeInput.value);}catch(e){}
+  }
+  showControlsInput.addEventListener('change',applyControlSettings);
+  arrowSizeInput.addEventListener('input',applyControlSettings);
+  spaceSizeInput.addEventListener('input',applyControlSettings);
+  document.getElementById('back-to-list').addEventListener('click',function(e){e.preventDefault();unityCall('matrix_back');});
+  settingsToggle.addEventListener('click',function(e){e.preventDefault();settingsPanel.classList.toggle('open');});
+  document.addEventListener('pointerdown',function(e){if(settingsPanel.classList.contains('open')&&!settingsPanel.contains(e.target)&&e.target!==settingsToggle)settingsPanel.classList.remove('open');});
+
+  function setFullscreen(enabled){
+    isFullscreen=!!enabled;
+    document.body.classList.toggle('player-fullscreen',isFullscreen);
+    fullscreenToggle.textContent=isFullscreen?'⤢ تصغير':'⛶ تكبير';
+    unityCall(isFullscreen?'matrix_player_fullscreen_on':'matrix_player_fullscreen_off');
+    try{localStorage.setItem('matrix.player.fullscreen',String(isFullscreen));}catch(e){}
+  }
+  fullscreenToggle.addEventListener('click',function(){setFullscreen(!isFullscreen);});
+  // زر Back في Android يعالج من Unity؛ كما نوفر إرسال خروج من داخل الصفحة عبر الضغط المطول على الإعدادات.
+  settingsToggle.addEventListener('contextmenu',function(e){e.preventDefault();unityCall('matrix_back');});
+  window.addEventListener('resize',function(){
+    [dpad,spaceControl].forEach(function(el){const r=el.getBoundingClientRect();clampPosition(el,r.left,r.top);});
+  });
+  loadSettings();
+})();
+</script>
+</body>
+</html>
