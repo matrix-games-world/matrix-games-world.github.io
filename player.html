@@ -329,10 +329,118 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     }
     try{localStorage.setItem('matrix.player.toolbarHidden',String(shouldHide));}catch(e){}
   }
-  document.getElementById('controls-visibility-toggle').addEventListener('click',function(e){
-    e.preventDefault();e.stopPropagation();
-    setToolbarHidden(!document.body.classList.contains('toolbar-hidden'));
-  });
+    // A normal tap toggles the toolbar. When the toolbar is hidden, long-press
+  // the remaining triangle to drag it anywhere on the screen.
+  (function setupMovableToolbarToggle(){
+    const toggle=document.getElementById('controls-visibility-toggle');
+    let pressTimer=null;
+    let pointerId=null;
+    let startX=0,startY=0,originX=0,originY=0;
+    let dragging=false;
+    let longPressTriggered=false;
+    const longPressDelay=380;
+    const moveThreshold=7;
+
+    function clamp(left,top){
+      const maxLeft=Math.max(0,window.innerWidth-toggle.offsetWidth);
+      const maxTop=Math.max(0,window.innerHeight-toggle.offsetHeight);
+      return {
+        left:Math.max(0,Math.min(maxLeft,left)),
+        top:Math.max(0,Math.min(maxTop,top))
+      };
+    }
+    function applyPosition(left,top,save){
+      const p=clamp(left,top);
+      toggle.style.position='fixed';
+      toggle.style.left=p.left+'px';
+      toggle.style.top=p.top+'px';
+      toggle.style.right='auto';
+      toggle.style.bottom='auto';
+      if(save){
+        try{localStorage.setItem('matrix.player.toolbarTogglePosition',JSON.stringify(p));}catch(ignore){}
+      }
+    }
+    function restorePosition(){
+      try{
+        const p=JSON.parse(localStorage.getItem('matrix.player.toolbarTogglePosition')||'null');
+        if(p && Number.isFinite(p.left) && Number.isFinite(p.top)) applyPosition(p.left,p.top,false);
+      }catch(ignore){}
+    }
+    function clearPressTimer(){
+      if(pressTimer!==null){clearTimeout(pressTimer);pressTimer=null;}
+    }
+    toggle.addEventListener('pointerdown',function(e){
+      if(e.button!==undefined && e.button!==0)return;
+      e.preventDefault();
+      e.stopPropagation();
+      pointerId=e.pointerId;
+      startX=e.clientX;
+      startY=e.clientY;
+      const rect=toggle.getBoundingClientRect();
+      originX=rect.left;
+      originY=rect.top;
+      dragging=false;
+      longPressTriggered=false;
+      clearPressTimer();
+      // Only make it draggable by long-press while the rest of the toolbar is hidden.
+      if(document.body.classList.contains('toolbar-hidden')){
+        pressTimer=setTimeout(function(){
+          pressTimer=null;
+          if(pointerId!==null){
+            dragging=true;
+            longPressTriggered=true;
+            toggle.style.cursor='grabbing';
+            try{toggle.setPointerCapture(pointerId);}catch(ignore){}
+          }
+        },longPressDelay);
+      }
+    });
+    toggle.addEventListener('pointermove',function(e){
+      if(pointerId===null || e.pointerId!==pointerId)return;
+      const dx=e.clientX-startX,dy=e.clientY-startY;
+      if(!dragging && Math.hypot(dx,dy)>moveThreshold){
+        // A clear drag gesture should move the button rather than trigger a tap.
+        clearPressTimer();
+        if(document.body.classList.contains('toolbar-hidden')){
+          dragging=true;
+          longPressTriggered=true;
+        }
+      }
+      if(dragging){
+        e.preventDefault();
+        e.stopPropagation();
+        applyPosition(originX+dx,originY+dy,false);
+      }
+    });
+    function finish(e){
+      if(pointerId===null || (e && e.pointerId!==pointerId))return;
+      clearPressTimer();
+      if(dragging){
+        const rect=toggle.getBoundingClientRect();
+        applyPosition(rect.left,rect.top,true);
+      }
+      toggle.style.cursor='';
+      pointerId=null;
+      dragging=false;
+    }
+    toggle.addEventListener('pointerup',finish);
+    toggle.addEventListener('pointercancel',finish);
+    toggle.addEventListener('lostpointercapture',finish);
+    toggle.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(longPressTriggered){
+        longPressTriggered=false;
+        return;
+      }
+      setToolbarHidden(!document.body.classList.contains('toolbar-hidden'));
+    });
+    window.addEventListener('resize',function(){
+      const rect=toggle.getBoundingClientRect();
+      if(toggle.style.position==='fixed')applyPosition(rect.left,rect.top,true);
+    });
+    restorePosition();
+  })();
   showControlsInput.addEventListener('change',applyControlSettings);
   arrowSizeInput.addEventListener('input',applyControlSettings);
   spaceSizeInput.addEventListener('input',applyControlSettings);
