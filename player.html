@@ -11,7 +11,7 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
 #player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow:hidden}
 /* وضع النافذة: إطار لعب داخل صفحة اللاعب. التكبير يمد هذا الإطار إلى الشاشة كاملة. */
-#game-frame{position:absolute;top:calc(env(safe-area-inset-top,0px) + 132px);right:4px;bottom:4px;left:4px;width:auto;height:auto;border:1px solid rgba(0,255,102,.72);border-radius:12px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden;display:block}
+#game-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:1}
 #game-heading{position:absolute;top:calc(env(safe-area-inset-top,0px) + 51px);left:8px;right:8px;min-height:72px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:6;pointer-events:none;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08)}
 #matrix-game-logo{width:36px;height:36px;flex:0 0 36px;object-fit:cover;border-radius:9px;border:1px solid rgba(0,255,102,.6);box-shadow:0 0 9px rgba(0,255,102,.16)}
 #game-heading-copy{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;direction:rtl;text-align:center}
@@ -70,7 +70,7 @@ body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:non
 #exit-confirm-actions .menu-action{flex:1;font-size:14px}
 #exit-confirm-yes{background:linear-gradient(150deg,rgba(0,105,43,.98),rgba(2,28,11,.99))}
 #exit-confirm-no{background:linear-gradient(150deg,rgba(30,49,35,.98),rgba(8,16,10,.99))}
-body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border-radius:0;border:0;box-shadow:none}
+body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
 @media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
 #tools-toggle{min-width:68px;padding-inline:8px;font-size:11px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-frame{top:calc(env(safe-area-inset-top,0px) + 134px);right:3px;bottom:3px;left:3px;width:auto;height:auto;border-radius:10px}#game-heading{top:calc(env(safe-area-inset-top,0px) + 49px);left:4px;right:4px;min-height:76px;padding:7px 8px;gap:7px}#matrix-game-logo{width:34px;height:34px;flex-basis:34px;border-radius:7px}#game-heading-copy{max-width:calc(100% - 42px);gap:4px}#game-title{font-size:14px}#game-description{font-size:11px;line-height:1.35}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
@@ -208,176 +208,9 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   }
   gameTitleElement.textContent=prettyGameName(gameName) || 'Matrix Games';
   gameDescriptionElement.textContent='العب ' + (prettyGameName(gameName) || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
-  function fitGameDocument(doc){
-    if(!doc) return;
-    try{
-      // Critical for mobile/WebView: a missing or desktop-width viewport makes the whole game render tiny.
-      let viewport=doc.querySelector('meta[name="viewport"]');
-      if(!viewport){
-        viewport=doc.createElement('meta');
-        viewport.name='viewport';
-        (doc.head||doc.documentElement).appendChild(viewport);
-      }
-      viewport.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
-      doc.documentElement.style.setProperty('width','100%','important');
-      doc.documentElement.style.setProperty('height','100%','important');
-      doc.documentElement.style.setProperty('min-width','0','important');
-      doc.documentElement.style.setProperty('min-height','0','important');
-      doc.documentElement.style.setProperty('overflow','hidden','important');
-      if(doc.body){
-        doc.body.style.setProperty('width','100%','important');
-        doc.body.style.setProperty('height','100%','important');
-        doc.body.style.setProperty('min-width','0','important');
-        doc.body.style.setProperty('min-height','0','important');
-        doc.body.style.setProperty('margin','0','important');
-        doc.body.style.setProperty('overflow','hidden','important');
-      }
-      if(!doc.getElementById('matrix-player-fit-style')){
-        const style=doc.createElement('style');
-        style.id='matrix-player-fit-style';
-        style.textContent=`
-          html,body{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important;}
-          body{display:block!important;position:relative!important;}
-          body>iframe,body>embed,body>object{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border:0!important;margin:0!important;}
-          canvas,video{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;}
-          /* GameMaker HTML5 titles (including Bacon May Die): resize the actual game canvas, not only its outer iframe. */
-          html:has(#gm4html5_div_id),body:has(#gm4html5_div_id){width:100%!important;height:100%!important;overflow:hidden!important;}
-          body#body:has(#gm4html5_div_id){position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-          #gm4html5_div_id{position:absolute!important;inset:0!important;width:100vw!important;height:100vh!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-          #gm4html5_div_id #canvas,#canvas{display:block!important;width:min(100vw,177.7778vh)!important;height:min(56.25vw,100vh)!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:fill!important;}
-          body>div:only-child,body>main:only-child,body>section:only-child,div:has(>canvas),div:has(>iframe),div:has(canvas),div:has(iframe),#gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;}
-          html,body,*{box-sizing:border-box!important;}
-        `;
-        (doc.head||doc.documentElement).appendChild(style);
-      }
-      doc.querySelectorAll('canvas,video').forEach(function(media){
-        media.style.setProperty('display','block','important');
-        media.style.setProperty('width','100%','important');
-        media.style.setProperty('height','100%','important');
-        media.style.setProperty('max-width','none','important');
-        media.style.setProperty('max-height','none','important');
-        media.style.setProperty('object-fit','contain','important');
-        // Stretch the ancestor chain so fixed-size game canvases do not sit tiny in a large black page.
-        let parent=media.parentElement;
-        let depth=0;
-        while(parent && parent!==doc.body && depth<8){
-          parent.style.setProperty('width','100%','important');
-          parent.style.setProperty('height','100%','important');
-          parent.style.setProperty('max-width','none','important');
-          parent.style.setProperty('max-height','none','important');
-          parent.style.setProperty('margin','0','important');
-          parent=parent.parentElement;
-          depth++;
-        }
-      });
-      Array.from(doc.querySelectorAll('iframe,embed,object')).forEach(function(inner){
-        inner.style.setProperty('display','block','important');
-        inner.style.setProperty('position','relative','important');
-        inner.style.setProperty('width','100%','important');
-        inner.style.setProperty('height','100%','important');
-        inner.style.setProperty('min-width','100%','important');
-        inner.style.setProperty('min-height','100%','important');
-        inner.style.setProperty('max-width','none','important');
-        inner.style.setProperty('max-height','none','important');
-        inner.style.setProperty('border','0','important');
-        inner.style.setProperty('margin','0','important');
-        // Expand fixed-size wrappers around the actual game frame, not only the outer player page.
-        let parent=inner.parentElement;
-        let depth=0;
-        while(parent && parent!==doc.body && depth<10){
-          parent.style.setProperty('width','100%','important');
-          parent.style.setProperty('height','100%','important');
-          parent.style.setProperty('min-width','100%','important');
-          parent.style.setProperty('min-height','100%','important');
-          parent.style.setProperty('max-width','none','important');
-          parent.style.setProperty('max-height','none','important');
-          parent.style.setProperty('margin','0','important');
-          parent.style.setProperty('padding','0','important');
-          parent=parent.parentElement;
-          depth++;
-        }
-        try{if(inner.contentDocument) fitGameDocument(inner.contentDocument);}catch(e){}
-      });
-      // Some games create or resize their canvas/iframe after the first load.
-      if(!doc.documentElement.dataset.matrixFitObserver && window.MutationObserver){
-        doc.documentElement.dataset.matrixFitObserver='1';
-        const observer=new MutationObserver(function(){
-          if(doc.documentElement.dataset.matrixFitRunning==='1') return;
-          doc.documentElement.dataset.matrixFitRunning='1';
-          requestAnimationFrame(function(){
-            try{
-              doc.documentElement.dataset.matrixFitRunning='0';
-              // Re-apply viewport + sizing because some games create the real player after load.
-              let vp=doc.querySelector('meta[name="viewport"]');
-              if(!vp){vp=doc.createElement('meta');vp.name='viewport';(doc.head||doc.documentElement).appendChild(vp);}
-              vp.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
-              doc.querySelectorAll('canvas,video,iframe,embed,object').forEach(function(el){
-                el.style.setProperty('display','block','important');
-                el.style.setProperty('width','100%','important');
-                el.style.setProperty('height','100%','important');
-                el.style.setProperty('min-width','100%','important');
-                el.style.setProperty('min-height','100%','important');
-                el.style.setProperty('max-width','none','important');
-                el.style.setProperty('max-height','none','important');
-              });
-            }catch(e){}
-          });
-        });
-        observer.observe(doc.documentElement,{childList:true,subtree:true});
-      }
-    }catch(e){}
-  }
-  function refreshEmbeddedGameLayout(){
-    try{
-      const doc=frame.contentDocument;
-      if(!doc) return false;
-      fitGameDocument(doc);
-      const canvas=doc.getElementById('canvas');
-      const gmRoot=doc.getElementById('gm4html5_div_id');
-      if(canvas && gmRoot){
-        // Apply sizing directly to Bacon May Die's real GameMaker canvas after its document.write().
-        if(!doc.getElementById('matrix-bacon-canvas-fit')){
-          const fitStyle=doc.createElement('style');
-          fitStyle.id='matrix-bacon-canvas-fit';
-          fitStyle.textContent=`
-            html,body,#body{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-            #body{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-            #gm4html5_div_id{position:absolute!important;inset:0!important;width:100vw!important;height:100vh!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-            #gm4html5_div_id #canvas{display:block!important;width:min(100vw,177.7778vh)!important;height:min(56.25vw,100vh)!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:fill!important;}
-          `;
-          (doc.head||doc.documentElement).appendChild(fitStyle);
-        }
-        canvas.style.setProperty('display','block','important');
-        canvas.style.setProperty('width','min(100vw, 177.7778vh)','important');
-        canvas.style.setProperty('height','min(56.25vw, 100vh)','important');
-        canvas.style.setProperty('max-width','none','important');
-        canvas.style.setProperty('max-height','none','important');
-        gmRoot.style.setProperty('position','absolute','important');
-        gmRoot.style.setProperty('inset','0','important');
-        gmRoot.style.setProperty('width','100vw','important');
-        gmRoot.style.setProperty('height','100vh','important');
-        gmRoot.style.setProperty('display','flex','important');
-        gmRoot.style.setProperty('align-items','center','important');
-        gmRoot.style.setProperty('justify-content','center','important');
-        return true;
-      }
-    }catch(e){}
-    return false;
-  }
   frame.addEventListener('load',function(){
     message.classList.remove('show');
     updateGameHeading();
-    fitGameDocument(frame.contentDocument);
-    refreshEmbeddedGameLayout();
-    // Bacon May Die writes its GameMaker page after initial loading; keep applying sizing until its real canvas appears.
-    [250,500,800,1200,1800,2600,4000,6000,9000,12000].forEach(function(delay){
-      setTimeout(function(){refreshEmbeddedGameLayout();},delay);
-    });
-    let attempts=0;
-    const fitTimer=setInterval(function(){
-      attempts++;
-      if(refreshEmbeddedGameLayout() || attempts>=50) clearInterval(fitTimer);
-    },250);
   });
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
   frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
