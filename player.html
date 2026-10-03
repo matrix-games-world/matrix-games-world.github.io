@@ -211,6 +211,27 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   function fitGameDocument(doc){
     if(!doc) return;
     try{
+      // Critical for mobile/WebView: a missing or desktop-width viewport makes the whole game render tiny.
+      let viewport=doc.querySelector('meta[name="viewport"]');
+      if(!viewport){
+        viewport=doc.createElement('meta');
+        viewport.name='viewport';
+        (doc.head||doc.documentElement).appendChild(viewport);
+      }
+      viewport.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+      doc.documentElement.style.setProperty('width','100%','important');
+      doc.documentElement.style.setProperty('height','100%','important');
+      doc.documentElement.style.setProperty('min-width','0','important');
+      doc.documentElement.style.setProperty('min-height','0','important');
+      doc.documentElement.style.setProperty('overflow','hidden','important');
+      if(doc.body){
+        doc.body.style.setProperty('width','100%','important');
+        doc.body.style.setProperty('height','100%','important');
+        doc.body.style.setProperty('min-width','0','important');
+        doc.body.style.setProperty('min-height','0','important');
+        doc.body.style.setProperty('margin','0','important');
+        doc.body.style.setProperty('overflow','hidden','important');
+      }
       if(!doc.getElementById('matrix-player-fit-style')){
         const style=doc.createElement('style');
         style.id='matrix-player-fit-style';
@@ -286,10 +307,16 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
           requestAnimationFrame(function(){
             try{
               doc.documentElement.dataset.matrixFitRunning='0';
+              // Re-apply viewport + sizing because some games create the real player after load.
+              let vp=doc.querySelector('meta[name="viewport"]');
+              if(!vp){vp=doc.createElement('meta');vp.name='viewport';(doc.head||doc.documentElement).appendChild(vp);}
+              vp.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
               doc.querySelectorAll('canvas,video,iframe,embed,object').forEach(function(el){
                 el.style.setProperty('display','block','important');
                 el.style.setProperty('width','100%','important');
                 el.style.setProperty('height','100%','important');
+                el.style.setProperty('min-width','100%','important');
+                el.style.setProperty('min-height','100%','important');
                 el.style.setProperty('max-width','none','important');
                 el.style.setProperty('max-height','none','important');
               });
