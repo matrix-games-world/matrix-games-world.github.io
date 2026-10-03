@@ -6,38 +6,46 @@
 <meta name="theme-color" content="#061006">
 <title>Matrix Games Player</title>
 <style>
-:root{--neon:#00ff66;--panel:rgba(3,18,7,.88);--line:rgba(0,255,102,.9);--arrow-size:1;--space-size:1}
+:root{--neon:#00ff66;--neon-soft:#83ffad;--panel:rgba(3,18,7,.94);--line:rgba(0,255,102,.92);--arrow-size:1;--space-size:1;--edge:rgba(0,255,102,.5)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
-#player{position:fixed;inset:0;background:#020602;overflow:hidden}
-#game-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:1}
+#player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow:hidden}
+/* وضع النافذة: إطار لعب داخل صفحة اللاعب. التكبير يمد هذا الإطار إلى الشاشة كاملة. */
+#game-frame{position:absolute;inset:60px 8px 10px;width:calc(100% - 16px);height:calc(100% - 70px);border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
 #player-ui{position:absolute;inset:0;z-index:20;pointer-events:none}
-.ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:none}
-.ui-button,.settings-toggle{border:1px solid var(--line);color:var(--neon);background:var(--panel);box-shadow:0 0 9px rgba(0,255,102,.18);border-radius:9px;font-weight:700;font-size:14px;min-height:39px;padding:7px 11px}
-#top-actions{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;display:flex;gap:7px;direction:rtl}
-#settings-toggle{min-width:42px;font-size:18px}
-#settings-panel{display:none;position:absolute;top:calc(env(safe-area-inset-top,0px) + 53px);right:8px;width:min(290px,calc(100vw - 16px));padding:12px;background:rgba(2,14,5,.97);border:1px solid var(--neon);border-radius:12px;box-shadow:0 0 18px rgba(0,255,102,.15);pointer-events:auto;font-size:14px}
-#settings-panel.open{display:block}
-.settings-title{font-weight:700;color:var(--neon);margin-bottom:10px}
-.settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}
+.ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle,.tools-panel,.menu-action{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ui-button,.settings-toggle{position:relative;border:1px solid rgba(105,255,159,.78);color:#eaffef;background:linear-gradient(155deg,rgba(21,70,37,.98),rgba(3,22,9,.98) 58%,rgba(1,10,4,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 0 rgba(0,0,0,.55),0 2px 0 rgba(0,90,38,.9),0 0 10px rgba(0,255,102,.13);border-radius:11px;font-weight:700;font-size:13px;min-height:40px;padding:7px 10px;text-shadow:0 1px 2px #000}
+.ui-button:active,.settings-toggle:active,.menu-action:active{transform:translateY(1px);background:linear-gradient(155deg,rgba(0,103,39,.98),rgba(2,37,14,.99));box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 0 10px rgba(0,255,102,.25)}
+#top-actions{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:8px;display:flex;align-items:center;justify-content:flex-start;gap:7px;direction:rtl;flex-wrap:nowrap;z-index:30}
+#top-actions .ui-button{white-space:nowrap}
+#settings-toggle,#tools-toggle{min-width:40px;padding-inline:10px;font-size:16px}
+#settings-panel,.tools-panel{display:none;position:absolute;top:calc(env(safe-area-inset-top,0px) + 55px);right:8px;width:min(310px,calc(100vw - 16px));padding:13px;background:linear-gradient(155deg,rgba(3,24,10,.985),rgba(1,8,3,.99));border:1px solid var(--neon);border-radius:15px;box-shadow:0 12px 35px rgba(0,0,0,.58),0 0 20px rgba(0,255,102,.18);pointer-events:auto;font-size:14px;z-index:35;backdrop-filter:blur(12px)}
+#settings-panel.open,.tools-panel.open{display:block}
+.settings-title,.tools-title{font-weight:800;color:var(--neon-soft);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(0,255,102,.22);letter-spacing:.2px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0}
 .settings-row label{flex:1}
 .settings-row input[type=range]{width:48%;accent-color:var(--neon)}
 #show-controls{accent-color:var(--neon);width:18px;height:18px}
-#touch-layer{position:absolute;inset:0;pointer-events:none}
-#dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(170px * var(--arrow-size));height:calc(184px * var(--arrow-size));pointer-events:auto;touch-action:none}
-.drag-handle{height:27px;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,255,102,.65);border-radius:8px 8px 0 0;background:rgba(0,25,8,.94);color:#a8ffc5;font-size:11px;letter-spacing:.2px}
-.dpad-grid{height:calc(100% - 27px);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4px;padding:5px;background:rgba(0,15,4,.73);border:1px solid rgba(0,255,102,.55);border-top:0;border-radius:0 0 9px 9px}
-.control-button{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;color:var(--neon);background:rgba(4,36,12,.94);box-shadow:0 0 7px rgba(0,255,102,.16);font-size:calc(24px * var(--arrow-size));font-weight:800;min-width:0;min-height:0;padding:0;touch-action:none}
-.control-button:active,.ui-button:active,.settings-toggle:active{background:rgba(0,90,28,.98);transform:scale(.97)}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-action{min-height:43px;border:1px solid rgba(0,255,102,.55);border-radius:10px;color:#eaffef;background:linear-gradient(150deg,rgba(13,52,26,.96),rgba(2,16,6,.98));font-weight:700;font-size:12px;padding:8px 6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 2px 0 rgba(0,0,0,.4);text-align:center}
+.menu-action:active{transform:translateY(1px);background:#075326}
+#touch-layer{position:absolute;inset:0;pointer-events:none;z-index:25}
+#dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(178px * var(--arrow-size));height:calc(192px * var(--arrow-size));pointer-events:auto;touch-action:none;filter:drop-shadow(0 7px 10px rgba(0,0,0,.42))}
+.drag-handle{height:27px;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,255,102,.7);border-radius:12px 12px 0 0;background:linear-gradient(180deg,rgba(25,78,41,.97),rgba(2,22,8,.97));color:#c6ffda;font-size:11px;letter-spacing:.2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.13)}
+.dpad-grid{height:calc(100% - 27px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:5px;padding:7px;background:linear-gradient(145deg,rgba(6,28,12,.92),rgba(0,8,3,.93));border:1px solid rgba(0,255,102,.58);border-top:0;border-radius:0 0 14px 14px;box-shadow:inset 0 1px 7px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.025)}
+.control-button{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:0;min-height:0;margin:0;padding:0;border:1px solid rgba(114,255,164,.88);border-radius:13px;color:#caffd9;background:linear-gradient(155deg,#1e6437 0%,#0a3219 42%,#031409 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -4px 6px rgba(0,0,0,.66),0 3px 0 #003a18,0 4px 7px rgba(0,0,0,.45),0 0 9px rgba(0,255,102,.15);font-size:calc(34px * var(--arrow-size));font-weight:900;line-height:1;text-align:center;text-shadow:0 2px 1px #001b09,0 0 8px rgba(0,255,102,.35);touch-action:none;overflow:hidden}
+.control-button::before{content:"";position:absolute;inset:1px 2px auto;height:42%;border-radius:10px 10px 50% 50%;background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,0));pointer-events:none;z-index:-1}
+.control-button:active{transform:translateY(2px) scale(.985);color:#fff;background:linear-gradient(155deg,#23a34d 0%,#08702b 45%,#034019 100%);box-shadow:inset 0 3px 7px rgba(0,0,0,.6),0 1px 0 #003a18,0 0 15px rgba(0,255,102,.35)}
 #up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#right{grid-column:3;grid-row:2}#down{grid-column:2;grid-row:3}
-#space-control{position:absolute;right:max(15px,env(safe-area-inset-right,0px));bottom:calc(max(20px,env(safe-area-inset-bottom,0px)) + 12px);width:calc(120px * var(--space-size));height:calc(70px * var(--space-size));display:flex;flex-direction:column;pointer-events:auto;touch-action:none}
-#space-drag{height:22px;border:1px solid rgba(0,255,102,.65);border-bottom:0;background:rgba(0,25,8,.94);border-radius:8px 8px 0 0;color:#a8ffc5;font-size:10px;display:flex;align-items:center;justify-content:center}
-#space-key{flex:1;border-radius:0 0 9px 9px;font-size:calc(15px * var(--space-size));letter-spacing:1px}
+#space-control{position:absolute;right:max(15px,env(safe-area-inset-right,0px));bottom:calc(max(20px,env(safe-area-inset-bottom,0px)) + 12px);width:calc(126px * var(--space-size));height:calc(76px * var(--space-size));display:flex;flex-direction:column;pointer-events:auto;touch-action:none;filter:drop-shadow(0 7px 10px rgba(0,0,0,.42))}
+#space-drag{height:22px;border:1px solid rgba(0,255,102,.7);border-bottom:0;background:linear-gradient(180deg,rgba(25,78,41,.97),rgba(2,22,8,.97));border-radius:11px 11px 0 0;color:#c6ffda;font-size:10px;display:flex;align-items:center;justify-content:center}
+#space-key{flex:1;border-radius:0 0 13px 13px;font-size:calc(16px * var(--space-size));letter-spacing:1.2px}
 #game-message{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(0,0,0,.88);color:#d9ffe5;font-size:16px;line-height:1.7;pointer-events:auto}
 #game-message.show{display:flex}
 body.controls-hidden #dpad,body.controls-hidden #space-control{display:none}
-body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 52px)}
-@media (max-width:520px){#dpad{width:calc(150px * var(--arrow-size));height:calc(164px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px)}.ui-button,.settings-toggle{font-size:12px;padding:6px 8px}}
+body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border-radius:0;border:0;box-shadow:none}
+body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
+@media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle,#tools-toggle{min-width:37px;padding-inline:7px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-frame{inset:55px 5px 7px;width:calc(100% - 10px);height:calc(100% - 62px);border-radius:11px}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
 </style>
 </head>
 <body>
@@ -45,9 +53,20 @@ body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 5
   <iframe id="game-frame" title="Matrix Games game" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write" allowfullscreen></iframe>
   <div id="player-ui">
     <div id="top-actions">
-      <button class="ui-button" id="back-to-list">↩ خروج</button>
-      <button class="settings-toggle" id="settings-toggle" aria-label="إعدادات التحكم">⚙</button>
-      <button class="ui-button" id="fullscreen-toggle">⛶ تكبير</button>
+      <button class="ui-button" id="back-to-list" aria-label="الرجوع للقائمة">↩ خروج</button>
+      <button class="ui-button" id="tools-toggle" aria-label="أدوات اللعبة" aria-expanded="false">☰ أدوات</button>
+      <button class="settings-toggle" id="settings-toggle" aria-label="إعدادات التحكم" aria-expanded="false">⚙</button>
+      <button class="ui-button" id="fullscreen-toggle" aria-label="تكبير مساحة اللعب">⛶ تكبير</button>
+    </div>
+    <div class="tools-panel" id="tools-panel" aria-label="أدوات اللعبة">
+      <div class="tools-title">أدوات اللعبة</div>
+      <div class="tools-grid">
+        <button class="menu-action" id="rotate-toggle">↻ تدوير الشاشة</button>
+        <button class="menu-action" id="save-progress">▣ حفظ التقدم</button>
+        <button class="menu-action" id="sync-progress">⟳ مزامنة التقدم</button>
+        <button class="menu-action" id="login-account">♙ تسجيل الدخول</button>
+        <button class="menu-action" id="logout-account">⇥ تسجيل الخروج</button>
+      </div>
     </div>
     <div id="settings-panel">
       <div class="settings-title">إعدادات أزرار التحكم</div>
@@ -61,8 +80,8 @@ body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 5
         <div id="dpad-drag" class="drag-handle">⠿ تحريك الأسهم</div>
         <div class="dpad-grid">
           <button class="control-button" id="up" data-key="ArrowUp" aria-label="أعلى">▲</button>
-          <button class="control-button" id="left" data-key="ArrowLeft" aria-label="يسار">◀</button>
-          <button class="control-button" id="right" data-key="ArrowRight" aria-label="يمين">▶</button>
+          <button class="control-button" id="left" data-key="ArrowRight" aria-label="يمين">▶</button>
+          <button class="control-button" id="right" data-key="ArrowLeft" aria-label="يسار">◀</button>
           <button class="control-button" id="down" data-key="ArrowDown" aria-label="أسفل">▼</button>
         </div>
       </div>
@@ -82,6 +101,8 @@ body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 5
   const frame = document.getElementById('game-frame');
   const settingsPanel = document.getElementById('settings-panel');
   const settingsToggle = document.getElementById('settings-toggle');
+  const toolsPanel = document.getElementById('tools-panel');
+  const toolsToggle = document.getElementById('tools-toggle');
   const fullscreenToggle = document.getElementById('fullscreen-toggle');
   const showControlsInput = document.getElementById('show-controls');
   const arrowSizeInput = document.getElementById('arrow-size');
@@ -199,20 +220,46 @@ body.player-fullscreen #settings-panel{top:calc(env(safe-area-inset-top,0px) + 5
   showControlsInput.addEventListener('change',applyControlSettings);
   arrowSizeInput.addEventListener('input',applyControlSettings);
   spaceSizeInput.addEventListener('input',applyControlSettings);
+  const closeTopPanels=function(){
+    settingsPanel.classList.remove('open');
+    toolsPanel.classList.remove('open');
+    settingsToggle.setAttribute('aria-expanded','false');
+    toolsToggle.setAttribute('aria-expanded','false');
+  };
   document.getElementById('back-to-list').addEventListener('click',function(e){e.preventDefault();unityCall('matrix_back');});
-  settingsToggle.addEventListener('click',function(e){e.preventDefault();settingsPanel.classList.toggle('open');});
-  document.addEventListener('pointerdown',function(e){if(settingsPanel.classList.contains('open')&&!settingsPanel.contains(e.target)&&e.target!==settingsToggle)settingsPanel.classList.remove('open');});
+  settingsToggle.addEventListener('click',function(e){
+    e.preventDefault();
+    const opening=!settingsPanel.classList.contains('open');
+    closeTopPanels();
+    if(opening){settingsPanel.classList.add('open');settingsToggle.setAttribute('aria-expanded','true');}
+  });
+  toolsToggle.addEventListener('click',function(e){
+    e.preventDefault();
+    const opening=!toolsPanel.classList.contains('open');
+    closeTopPanels();
+    if(opening){toolsPanel.classList.add('open');toolsToggle.setAttribute('aria-expanded','true');}
+  });
+  document.addEventListener('pointerdown',function(e){
+    if(!settingsPanel.contains(e.target)&&e.target!==settingsToggle&&
+       !toolsPanel.contains(e.target)&&e.target!==toolsToggle) closeTopPanels();
+  });
+  document.getElementById('rotate-toggle').addEventListener('click',function(){closeTopPanels();unityCall('matrix_rotate');});
+  document.getElementById('save-progress').addEventListener('click',function(){closeTopPanels();unityCall('matrix_save_progress');});
+  document.getElementById('sync-progress').addEventListener('click',function(){closeTopPanels();unityCall('matrix_sync_progress');});
+  document.getElementById('login-account').addEventListener('click',function(){closeTopPanels();unityCall('matrix_login');});
+  document.getElementById('logout-account').addEventListener('click',function(){closeTopPanels();unityCall('matrix_logout');});
 
   function setFullscreen(enabled){
     isFullscreen=!!enabled;
     document.body.classList.toggle('player-fullscreen',isFullscreen);
     fullscreenToggle.textContent=isFullscreen?'⤢ تصغير':'⛶ تكبير';
+    fullscreenToggle.setAttribute('aria-label',isFullscreen?'تصغير مساحة اللعب':'تكبير مساحة اللعب');
     unityCall(isFullscreen?'matrix_player_fullscreen_on':'matrix_player_fullscreen_off');
     try{localStorage.setItem('matrix.player.fullscreen',String(isFullscreen));}catch(e){}
   }
   fullscreenToggle.addEventListener('click',function(){setFullscreen(!isFullscreen);});
-  // زر Back في Android يعالج من Unity؛ كما نوفر إرسال خروج من داخل الصفحة عبر الضغط المطول على الإعدادات.
-  settingsToggle.addEventListener('contextmenu',function(e){e.preventDefault();unityCall('matrix_back');});
+  // الضغط المطوّل على زر الأدوات يظل اختصارًا للخروج، دون تعطيل فتح القائمة بالنقر العادي.
+  toolsToggle.addEventListener('contextmenu',function(e){e.preventDefault();unityCall('matrix_back');});
   window.addEventListener('resize',function(){
     [dpad,spaceControl].forEach(function(el){const r=el.getBoundingClientRect();clampPosition(el,r.left,r.top);});
   });
