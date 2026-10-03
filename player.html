@@ -249,14 +249,32 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
           depth++;
         }
       });
-      Array.from(doc.querySelectorAll('iframe')).forEach(function(inner){
+      Array.from(doc.querySelectorAll('iframe,embed,object')).forEach(function(inner){
         inner.style.setProperty('display','block','important');
+        inner.style.setProperty('position','relative','important');
         inner.style.setProperty('width','100%','important');
         inner.style.setProperty('height','100%','important');
+        inner.style.setProperty('min-width','100%','important');
+        inner.style.setProperty('min-height','100%','important');
         inner.style.setProperty('max-width','none','important');
         inner.style.setProperty('max-height','none','important');
         inner.style.setProperty('border','0','important');
         inner.style.setProperty('margin','0','important');
+        // Expand fixed-size wrappers around the actual game frame, not only the outer player page.
+        let parent=inner.parentElement;
+        let depth=0;
+        while(parent && parent!==doc.body && depth<10){
+          parent.style.setProperty('width','100%','important');
+          parent.style.setProperty('height','100%','important');
+          parent.style.setProperty('min-width','100%','important');
+          parent.style.setProperty('min-height','100%','important');
+          parent.style.setProperty('max-width','none','important');
+          parent.style.setProperty('max-height','none','important');
+          parent.style.setProperty('margin','0','important');
+          parent.style.setProperty('padding','0','important');
+          parent=parent.parentElement;
+          depth++;
+        }
         try{if(inner.contentDocument) fitGameDocument(inner.contentDocument);}catch(e){}
       });
       // Some games create or resize their canvas/iframe after the first load.
