@@ -61,6 +61,15 @@ body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:non
 #space-key{flex:1;border-radius:0 0 13px 13px;font-size:calc(16px * var(--space-size));letter-spacing:1.2px}
 #game-message{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(0,0,0,.88);color:#d9ffe5;font-size:16px;line-height:1.7;pointer-events:auto}
 #game-message.show{display:flex}
+#exit-confirm{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);pointer-events:auto}
+#exit-confirm.show{display:flex}
+#exit-confirm-card{width:min(330px,100%);padding:22px 18px 18px;border:1px solid rgba(0,255,102,.9);border-radius:17px;background:linear-gradient(150deg,rgba(5,35,14,.98),rgba(1,10,4,.99));box-shadow:0 12px 36px rgba(0,0,0,.65),0 0 22px rgba(0,255,102,.15);text-align:center}
+#exit-confirm-title{margin:0 0 9px;color:#eaffef;font-size:19px;font-weight:800}
+#exit-confirm-text{margin:0 0 20px;color:#bfe8ca;font-size:14px;line-height:1.7}
+#exit-confirm-actions{display:flex;gap:10px}
+#exit-confirm-actions .menu-action{flex:1;font-size:14px}
+#exit-confirm-yes{background:linear-gradient(150deg,rgba(0,105,43,.98),rgba(2,28,11,.99))}
+#exit-confirm-no{background:linear-gradient(150deg,rgba(30,49,35,.98),rgba(8,16,10,.99))}
 body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border-radius:0;border:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
 @media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
@@ -118,6 +127,16 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       </div>
     </div>
     <div id="game-message"></div>
+    <div id="exit-confirm" role="dialog" aria-modal="true" aria-labelledby="exit-confirm-title">
+      <div id="exit-confirm-card">
+        <h2 id="exit-confirm-title">تأكيد الخروج</h2>
+        <p id="exit-confirm-text">هل تريد الخروج من اللعبة والعودة إلى قائمة الألعاب؟</p>
+        <div id="exit-confirm-actions">
+          <button class="menu-action" id="exit-confirm-yes" type="button">نعم، خروج</button>
+          <button class="menu-action" id="exit-confirm-no" type="button">لا، متابعة اللعب</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -135,6 +154,9 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   const arrowSizeInput = document.getElementById('arrow-size');
   const spaceSizeInput = document.getElementById('space-size');
   const message = document.getElementById('game-message');
+  const exitConfirm = document.getElementById('exit-confirm');
+  const exitConfirmYes = document.getElementById('exit-confirm-yes');
+  const exitConfirmNo = document.getElementById('exit-confirm-no');
   const gameTitleElement = document.getElementById('game-title');
   const gameDescriptionElement = document.getElementById('game-description');
   const loginAccountButton = document.getElementById('login-account');
@@ -197,7 +219,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
           body{display:block!important;position:relative!important;}
           body>iframe,body>embed,body>object{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border:0!important;margin:0!important;}
           canvas,video{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;}
-          #gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;}
+          body>div:only-child,body>main:only-child,body>section:only-child,div:has(>canvas),div:has(>iframe),div:has(canvas),div:has(iframe),#gameContainer,#game-container,#game-container-outer,#unity-container,#unity-canvas-container,.game-container,.game-wrapper,#container{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;}
+          html,body,*{box-sizing:border-box!important;}
         `;
         (doc.head||doc.documentElement).appendChild(style);
       }
@@ -222,13 +245,36 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
         }
       });
       Array.from(doc.querySelectorAll('iframe')).forEach(function(inner){
+        inner.style.setProperty('display','block','important');
         inner.style.setProperty('width','100%','important');
         inner.style.setProperty('height','100%','important');
-        inner.style.setProperty('max-width','100%','important');
-        inner.style.setProperty('max-height','100%','important');
+        inner.style.setProperty('max-width','none','important');
+        inner.style.setProperty('max-height','none','important');
         inner.style.setProperty('border','0','important');
-        try{fitGameDocument(inner.contentDocument);}catch(e){}
+        inner.style.setProperty('margin','0','important');
+        try{if(inner.contentDocument) fitGameDocument(inner.contentDocument);}catch(e){}
       });
+      // Some games create or resize their canvas/iframe after the first load.
+      if(!doc.documentElement.dataset.matrixFitObserver && window.MutationObserver){
+        doc.documentElement.dataset.matrixFitObserver='1';
+        const observer=new MutationObserver(function(){
+          if(doc.documentElement.dataset.matrixFitRunning==='1') return;
+          doc.documentElement.dataset.matrixFitRunning='1';
+          requestAnimationFrame(function(){
+            try{
+              doc.documentElement.dataset.matrixFitRunning='0';
+              doc.querySelectorAll('canvas,video,iframe,embed,object').forEach(function(el){
+                el.style.setProperty('display','block','important');
+                el.style.setProperty('width','100%','important');
+                el.style.setProperty('height','100%','important');
+                el.style.setProperty('max-width','none','important');
+                el.style.setProperty('max-height','none','important');
+              });
+            }catch(e){}
+          });
+        });
+        observer.observe(doc.documentElement,{childList:true,subtree:true});
+      }
     }catch(e){}
   }
   frame.addEventListener('load',function(){
@@ -368,7 +414,21 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     settingsToggle.setAttribute('aria-expanded','false');
     toolsToggle.setAttribute('aria-expanded','false');
   };
-  document.getElementById('back-to-list').addEventListener('click',function(e){e.preventDefault();unityCall('matrix_back');});
+  function openExitConfirm(){
+    closeTopPanels();
+    exitConfirm.classList.add('show');
+    exitConfirmYes.focus();
+  }
+  function closeExitConfirm(){
+    exitConfirm.classList.remove('show');
+    const backButton=document.getElementById('back-to-list');
+    if(backButton) backButton.focus();
+  }
+  document.getElementById('back-to-list').addEventListener('click',function(e){e.preventDefault();openExitConfirm();});
+  exitConfirmYes.addEventListener('click',function(){closeExitConfirm();unityCall('matrix_back');});
+  exitConfirmNo.addEventListener('click',closeExitConfirm);
+  exitConfirm.addEventListener('click',function(e){if(e.target===exitConfirm)closeExitConfirm();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&exitConfirm.classList.contains('show')){e.preventDefault();closeExitConfirm();}});
   settingsToggle.addEventListener('click',function(e){
     e.preventDefault();
     const opening=!settingsPanel.classList.contains('open');
