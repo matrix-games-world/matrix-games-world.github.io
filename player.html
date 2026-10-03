@@ -646,8 +646,6 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   toolsToggle.addEventListener('contextmenu',function(e){e.preventDefault();unityCall('matrix_back');});
   window.addEventListener('resize',function(){
     [dpad,spaceControl].forEach(function(el){const r=el.getBoundingClientRect();clampPosition(el,r.left,r.top);});
-    centerAndScaleGameContent(frame.contentDocument);
-    positionGameAboutCard();
   });
   loadSettings();
   let savedToolbarHidden=false;
