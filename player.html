@@ -32,15 +32,18 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 .menu-action{min-height:43px;border:1px solid rgba(0,255,102,.55);border-radius:10px;color:#eaffef;background:linear-gradient(150deg,rgba(13,52,26,.96),rgba(2,16,6,.98));font-weight:700;font-size:12px;padding:8px 6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 2px 0 rgba(0,0,0,.4);text-align:center}
 .menu-action:active{transform:translateY(1px);background:#075326}
 #touch-layer{position:absolute;inset:0;pointer-events:none;z-index:25}
-/* زر مثلث ثابت على حافة الشاشة لإخفاء/إظهار لوحة التحكم */
-#controls-visibility-toggle{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:60;pointer-events:auto;touch-action:manipulation;width:28px;height:58px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(116,255,165,.92);border-left:0;border-radius:0 13px 13px 0;color:#caffd9;background:linear-gradient(145deg,rgba(22,88,43,.99),rgba(1,18,7,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 3px 12px rgba(0,0,0,.48),0 0 12px rgba(0,255,102,.22);font-size:19px;font-weight:900;line-height:1}
-#controls-visibility-toggle:active{background:#08702b}
+/* زر مثلث صغير داخل الصف العلوي؛ يبقى ظاهرًا عندما نخفي بقية الواجهة */
+#controls-visibility-toggle{position:relative;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;display:flex;align-items:center;justify-content:center;z-index:32;pointer-events:auto;touch-action:manipulation;border:1px solid rgba(116,255,165,.92);border-radius:11px;color:#caffd9;background:linear-gradient(150deg,rgba(22,88,43,.99),rgba(1,18,7,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -2px 0 rgba(0,0,0,.45),0 2px 0 rgba(0,90,38,.85),0 0 11px rgba(0,255,102,.2);font-size:17px;font-weight:900;line-height:1}
+#controls-visibility-toggle:active{transform:translateY(1px);background:#08702b}
 #controls-visibility-toggle .triangle{display:block;transition:transform .18s ease}
+/* عند الإخفاء يبقى زر المثلث فقط من واجهة اللاعب، وتظل اللعبة نفسها ظاهرة. */
 body.controls-hidden #dpad,body.controls-hidden #space-control{display:none!important}
+body.controls-hidden #top-actions > :not(#controls-visibility-toggle){display:none!important}
+body.controls-hidden #settings-panel,body.controls-hidden .tools-panel{display:none!important}
 
 #dpad{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(178px * var(--arrow-size));height:calc(192px * var(--arrow-size));pointer-events:auto;touch-action:none;filter:drop-shadow(0 7px 10px rgba(0,0,0,.42))}
 .drag-handle{height:27px;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,255,102,.7);border-radius:12px 12px 0 0;background:linear-gradient(180deg,rgba(25,78,41,.97),rgba(2,22,8,.97));color:#c6ffda;font-size:11px;letter-spacing:.2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.13)}
-.dpad-grid{height:calc(100% - 27px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:5px;padding:7px;background:linear-gradient(145deg,rgba(6,28,12,.92),rgba(0,8,3,.93));border:1px solid rgba(0,255,102,.58);border-top:0;border-radius:0 0 14px 14px;box-shadow:inset 0 1px 7px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.025)}
+.dpad-grid{direction:ltr;height:calc(100% - 27px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:5px;padding:7px;background:linear-gradient(145deg,rgba(6,28,12,.92),rgba(0,8,3,.93));border:1px solid rgba(0,255,102,.58);border-top:0;border-radius:0 0 14px 14px;box-shadow:inset 0 1px 7px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.025)}
 .control-button{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:0;min-height:0;margin:0;padding:0;border:1px solid rgba(114,255,164,.88);border-radius:13px;color:#caffd9;background:linear-gradient(155deg,#1e6437 0%,#0a3219 42%,#031409 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -4px 6px rgba(0,0,0,.66),0 3px 0 #003a18,0 4px 7px rgba(0,0,0,.45),0 0 9px rgba(0,255,102,.15);font-size:calc(34px * var(--arrow-size));font-weight:900;line-height:1;text-align:center;text-shadow:0 2px 1px #001b09,0 0 8px rgba(0,255,102,.35);touch-action:none;overflow:hidden}
 .control-button::before{content:"";position:absolute;inset:1px 2px auto;height:42%;border-radius:10px 10px 50% 50%;background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,0));pointer-events:none;z-index:-1}
 .control-button:active{transform:translateY(2px) scale(.985);color:#fff;background:linear-gradient(155deg,#23a34d 0%,#08702b 45%,#034019 100%);box-shadow:inset 0 3px 7px rgba(0,0,0,.6),0 1px 0 #003a18,0 0 15px rgba(0,255,102,.35)}
@@ -50,7 +53,6 @@ body.controls-hidden #dpad,body.controls-hidden #space-control{display:none!impo
 #space-key{flex:1;border-radius:0 0 13px 13px;font-size:calc(16px * var(--space-size));letter-spacing:1.2px}
 #game-message{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(0,0,0,.88);color:#d9ffe5;font-size:16px;line-height:1.7;pointer-events:auto}
 #game-message.show{display:flex}
-body.controls-hidden #dpad,body.controls-hidden #space-control{display:none}
 body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border-radius:0;border:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
 @media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
@@ -66,6 +68,7 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       <button class="ui-button" id="tools-toggle" aria-label="المزيد من أدوات اللعبة" aria-expanded="false">⋮ المزيد</button>
       <button class="settings-toggle" id="settings-toggle" aria-label="إعدادات التحكم" aria-expanded="false">⚙</button>
       <button class="ui-button" id="fullscreen-toggle" aria-label="تكبير مساحة اللعب">⛶ تكبير</button>
+      <button id="controls-visibility-toggle" type="button" aria-label="إخفاء كل أزرار الواجهة" aria-pressed="false" title="إخفاء كل أزرار الواجهة"><span class="triangle">◀</span></button>
     </div>
     <div class="tools-panel" id="tools-panel" aria-label="أدوات اللعبة">
       <div class="tools-title">أدوات اللعبة</div>
@@ -84,14 +87,13 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       <div class="settings-row"><label for="space-size">حجم SPACE</label><input id="space-size" type="range" min="0.65" max="1.5" step="0.05" value="1"></div>
       <div style="font-size:11px;color:#b9d9c3;margin-top:8px">اسحب شريط «تحريك» لتحريك الأسهم، وشريط «تحريك SPACE» لتحريك زر المسافة.</div>
     </div>
-    <button id="controls-visibility-toggle" type="button" aria-label="إخفاء أزرار التحكم" aria-pressed="false" title="إخفاء أو إظهار أزرار التحكم"><span class="triangle">◀</span></button>
     <div id="touch-layer">
       <div id="dpad">
         <div id="dpad-drag" class="drag-handle">⠿ تحريك الأسهم</div>
         <div class="dpad-grid">
           <button class="control-button" id="up" data-key="ArrowUp" aria-label="أعلى">▲</button>
-          <button class="control-button" id="left" data-key="ArrowLeft" aria-label="يسار">◀</button>
-          <button class="control-button" id="right" data-key="ArrowRight" aria-label="يمين">▶</button>
+          <button class="control-button" id="left" data-key="ArrowLeft" aria-label="تحريك اللاعب لليسار">◀</button>
+          <button class="control-button" id="right" data-key="ArrowRight" aria-label="تحريك اللاعب لليمين">▶</button>
           <button class="control-button" id="down" data-key="ArrowDown" aria-label="أسفل">▼</button>
         </div>
       </div>
@@ -228,8 +230,8 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     const toggle=document.getElementById('controls-visibility-toggle');
     if(toggle){
       toggle.setAttribute('aria-pressed',String(!showControlsInput.checked));
-      toggle.setAttribute('aria-label',showControlsInput.checked?'إخفاء أزرار التحكم':'إظهار أزرار التحكم');
-      toggle.title=showControlsInput.checked?'إخفاء أزرار التحكم':'إظهار أزرار التحكم';
+      toggle.setAttribute('aria-label',showControlsInput.checked?'إخفاء كل أزرار الواجهة':'إظهار أزرار الواجهة');
+      toggle.title=showControlsInput.checked?'إخفاء كل أزرار الواجهة':'إظهار أزرار الواجهة';
       toggle.querySelector('.triangle').textContent=showControlsInput.checked?'◀':'▶';
     }
     try{localStorage.setItem('matrix.player.controls',String(showControlsInput.checked));localStorage.setItem('matrix.player.arrowSize',arrowSizeInput.value);localStorage.setItem('matrix.player.spaceSize',spaceSizeInput.value);}catch(e){}
