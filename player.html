@@ -11,7 +11,7 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
 #player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow:hidden}
 /* وضع النافذة: إطار لعب داخل صفحة اللاعب. التكبير يمد هذا الإطار إلى الشاشة كاملة. */
-#game-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:1;overflow:hidden}
+#game-frame{position:absolute;top:calc(env(safe-area-inset-top,0px) + 132px);right:8px;bottom:10px;left:8px;width:auto;height:auto;border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
 #game-heading{position:absolute;top:calc(env(safe-area-inset-top,0px) + 51px);left:8px;right:8px;min-height:72px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:6;pointer-events:none;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08)}
 #matrix-game-logo{width:36px;height:36px;flex:0 0 36px;object-fit:cover;border-radius:9px;border:1px solid rgba(0,255,102,.6);box-shadow:0 0 9px rgba(0,255,102,.16)}
 #game-heading-copy{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;direction:rtl;text-align:center}
@@ -72,7 +72,7 @@ body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:non
 #exit-confirm-no{background:linear-gradient(150deg,rgba(30,49,35,.98),rgba(8,16,10,.99))}
 body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
-@media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
+@media (max-width:520px){#game-frame{top:calc(env(safe-area-inset-top,0px) + 134px);right:4px;bottom:5px;left:4px;width:auto;height:auto;border-radius:11px}#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
 #tools-toggle{min-width:68px;padding-inline:8px;font-size:11px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-heading{top:calc(env(safe-area-inset-top,0px) + 49px);left:4px;right:4px;min-height:76px;padding:7px 8px;gap:7px}#matrix-game-logo{width:34px;height:34px;flex-basis:34px;border-radius:7px}#game-heading-copy{max-width:calc(100% - 42px);gap:4px}#game-title{font-size:14px}#game-description{font-size:11px;line-height:1.35}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
 </style>
 </head>
