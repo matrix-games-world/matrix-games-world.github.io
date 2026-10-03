@@ -9,7 +9,7 @@
 :root{--neon:#00ff66;--neon-soft:#83ffad;--panel:rgba(3,18,7,.94);--line:rgba(0,255,102,.92);--arrow-size:1;--space-size:1;--edge:rgba(0,255,102,.5)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
-#player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow:hidden}
+#player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 /* وضع النافذة: إطار لعب داخل صفحة اللاعب. التكبير يمد هذا الإطار إلى الشاشة كاملة. */
 #game-frame{position:absolute;top:calc(env(safe-area-inset-top,0px) + 132px);right:8px;bottom:10px;left:8px;width:auto;height:auto;border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
 #game-heading{position:absolute;top:calc(env(safe-area-inset-top,0px) + 51px);left:8px;right:8px;min-height:72px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:6;pointer-events:none;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08)}
@@ -17,14 +17,36 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 #game-heading-copy{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;direction:rtl;text-align:center}
 #game-title{margin:0;max-width:100%;font-size:16px;line-height:1.25;font-weight:800;color:#eaffef;white-space:normal;overflow-wrap:anywhere;text-shadow:0 0 8px rgba(0,255,102,.17)}
 #game-description{margin:0;max-width:100%;font-size:12px;line-height:1.4;font-weight:500;color:#c0e8cb;white-space:normal;overflow-wrap:anywhere;text-align:center}
-#game-about-card{position:absolute;top:390px;left:8px;right:8px;min-height:70px;padding:9px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:8;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08);pointer-events:none}
-#game-about-logo{width:34px;height:34px;flex:0 0 34px;object-fit:cover;border:1px solid rgba(0,255,102,.6);border-radius:8px}
-#game-about-copy{min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;direction:rtl;text-align:center}
-#game-about-title{margin:0;color:#eaffef;font-size:13px;font-weight:800}
-#game-about-description{margin:0;color:#bfe8ca;font-size:11px;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+#game-stage{position:relative;width:100%;margin:calc(env(safe-area-inset-top,0px) + 132px) auto 0;padding:0 8px;display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,min(760px,70vw)) minmax(110px,1fr);gap:12px;align-items:stretch}
+#game-frame{position:relative;top:auto;left:auto;right:auto;bottom:auto;display:block;grid-column:2;width:100%;height:min(64vh,620px);min-width:0;margin:0 auto;border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
+.related-rail{display:flex;flex-direction:column;gap:9px;min-width:0;align-self:stretch;overflow:hidden}
+.related-rail-title{margin:0 0 2px;color:#83ffad;font-size:12px;text-align:center;font-weight:800}
+.related-game-tile{width:100%;min-width:0;padding:10px 6px;border:1px solid rgba(0,255,102,.45);border-radius:11px;background:linear-gradient(150deg,rgba(6,29,12,.98),rgba(1,9,3,.99));color:#eaffef;text-align:center;cursor:pointer;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.related-game-tile small{display:block;margin-top:4px;color:#8fc99d;font-size:10px}
+.related-game-tile:active{background:#0b4820;border-color:#00ff66}
+#game-about-card{position:relative;top:auto;left:auto;right:auto;width:calc(100% - 16px);min-height:96px;margin:12px auto 0;padding:14px 16px;display:block;z-index:2;border:1px solid rgba(0,255,102,.62);border-radius:13px;background:linear-gradient(110deg,rgba(3,23,8,.97),rgba(7,43,18,.97),rgba(2,15,5,.98));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08);direction:rtl}
+#game-about-title{margin:0 0 8px;color:#eaffef;font-size:16px;font-weight:800}
+#game-about-category{display:inline-flex;align-items:center;margin:0 0 8px;padding:4px 10px;border:1px solid rgba(0,255,102,.5);border-radius:999px;background:rgba(0,255,102,.08);color:#83ffad;font-size:11px;font-weight:800}
+#game-about-description{margin:0 0 8px;color:#c0e8cb;font-size:12px;line-height:1.6;white-space:normal;overflow-wrap:anywhere}
+#game-about-howto{margin:0;color:#a9d9b5;font-size:12px;line-height:1.6;white-space:normal;overflow-wrap:anywhere}
+#related-games-mobile{width:calc(100% - 16px);margin:14px auto 28px}
+#related-games-mobile h3{margin:0 0 10px;color:#83ffad;font-size:15px}
+#related-games-list{display:flex;gap:8px;overflow-x:auto;padding:2px 1px 10px;scrollbar-width:thin;scrollbar-color:#087b31 #061006}
+#related-games-list .related-game-tile{flex:0 0 145px;min-height:65px}
+#related-confirm{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);pointer-events:auto}
+#related-confirm.show{display:flex}
+#related-confirm-card{width:min(340px,100%);padding:22px 18px 18px;border:1px solid rgba(0,255,102,.9);border-radius:17px;background:linear-gradient(150deg,rgba(5,35,14,.98),rgba(1,10,4,.99));box-shadow:0 12px 36px rgba(0,0,0,.65),0 0 22px rgba(0,255,102,.15);text-align:center}
+#related-confirm-title{margin:0 0 9px;color:#eaffef;font-size:18px;font-weight:800}
+#related-confirm-text{margin:0 0 20px;color:#bfe8ca;font-size:14px;line-height:1.7}
+#related-confirm-actions{display:flex;gap:10px}
+#related-confirm-actions .menu-action{flex:1;font-size:13px}
+#related-confirm-yes{background:linear-gradient(150deg,rgba(0,105,43,.98),rgba(2,28,11,.99))}
+#related-confirm-no{background:linear-gradient(150deg,rgba(30,49,35,.98),rgba(8,16,10,.99))}
+body.player-fullscreen #game-frame{position:fixed;inset:0;width:100vw;height:100dvh;grid-column:auto;margin:0;border:0;border-radius:0;box-shadow:none;z-index:55}
+body.player-fullscreen #game-about-card,body.player-fullscreen #related-games-mobile,body.player-fullscreen .related-rail{display:none!important}
 
 body.player-fullscreen #game-heading{display:none}
-#player-ui{position:absolute;inset:0;z-index:20;pointer-events:none}
+#player-ui{position:fixed;inset:0;z-index:20;pointer-events:none}
 .ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle,.tools-panel,.menu-action{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .ui-button,.settings-toggle{position:relative;border:1px solid rgba(105,255,159,.78);color:#eaffef;background:linear-gradient(155deg,rgba(21,70,37,.98),rgba(3,22,9,.98) 58%,rgba(1,10,4,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 0 rgba(0,0,0,.55),0 2px 0 rgba(0,90,38,.9),0 0 10px rgba(0,255,102,.13);border-radius:11px;font-weight:700;font-size:13px;min-height:40px;padding:7px 10px;text-shadow:0 1px 2px #000}
 .ui-button:active,.settings-toggle:active,.menu-action:active{transform:translateY(1px);background:linear-gradient(155deg,rgba(0,103,39,.98),rgba(2,37,14,.99));box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 0 10px rgba(0,255,102,.25)}
@@ -78,13 +100,18 @@ body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:non
 #exit-confirm-no{background:linear-gradient(150deg,rgba(30,49,35,.98),rgba(8,16,10,.99))}
 body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
-@media (max-width:520px){#game-frame{top:calc(env(safe-area-inset-top,0px) + 134px);right:4px;bottom:5px;left:4px;width:auto;height:auto;border-radius:11px}#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
+@media (max-width:899px){#game-stage{display:block;margin-top:calc(env(safe-area-inset-top,0px) + 132px);padding:0 6px}#game-frame{width:100%;height:min(64vh,620px);margin:0 auto;border-radius:12px}.related-rail{display:none!important}#game-about-card{width:calc(100% - 12px)}#related-games-mobile{width:calc(100% - 12px)}}
+@media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
 #tools-toggle{min-width:68px;padding-inline:8px;font-size:11px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-heading{top:calc(env(safe-area-inset-top,0px) + 49px);left:4px;right:4px;min-height:76px;padding:7px 8px;gap:7px}#matrix-game-logo{width:34px;height:34px;flex-basis:34px;border-radius:7px}#game-heading-copy{max-width:calc(100% - 42px);gap:4px}#game-title{font-size:14px}#game-description{font-size:11px;line-height:1.35}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
 </style>
 </head>
 <body>
 <div id="player">
-  <iframe id="game-frame" title="Matrix Games game" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  <div id="game-stage">
+    <div class="related-rail" id="related-left"><h3 class="related-rail-title">من نفس التصنيف</h3></div>
+    <iframe id="game-frame" title="Matrix Games game" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write" allowfullscreen></iframe>
+    <div class="related-rail" id="related-right"><h3 class="related-rail-title">ألعاب أخرى</h3></div>
+  </div>
   <div id="player-ui">
     <div id="top-actions">
       <button class="ui-button" id="back-to-list" aria-label="الرجوع للقائمة">↩ خروج</button>
@@ -98,13 +125,6 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       <div id="game-heading-copy">
         <h1 id="game-title">Matrix Games</h1>
         <p id="game-description">تحميل معلومات اللعبة...</p>
-      </div>
-    </div>
-    <div id="game-about-card" aria-live="polite">
-      <img id="game-about-logo" src="/assets/matrix-logo-192.jpg" alt="Matrix Games" onerror="this.onerror=null;this.src='/assets/matrix-favicon-48.png'">
-      <div id="game-about-copy">
-        <h2 id="game-about-title">عن اللعبة</h2>
-        <p id="game-about-description">تعرف على اللعبة واستمتع بها على Matrix Games.</p>
       </div>
     </div>
     <div class="tools-panel" id="tools-panel" aria-label="أدوات اللعبة">
@@ -150,13 +170,35 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
         </div>
       </div>
     </div>
+    <div id="related-confirm" role="dialog" aria-modal="true" aria-labelledby="related-confirm-title">
+      <div id="related-confirm-card">
+        <h2 id="related-confirm-title">تأكيد فتح لعبة أخرى</h2>
+        <p id="related-confirm-text">هل تريد مغادرة اللعبة الحالية وفتح لعبة أخرى؟</p>
+        <div id="related-confirm-actions">
+          <button class="menu-action" id="related-confirm-yes" type="button">نعم، افتح اللعبة</button>
+          <button class="menu-action" id="related-confirm-no" type="button">لا، أكمل اللعب</button>
+        </div>
+      </div>
+    </div>
   </div>
+  <section id="game-about-card" aria-live="polite">
+    <h2 id="game-about-title">تفاصيل اللعبة</h2>
+    <div id="game-about-category">التصنيف: جارٍ التحديد</div>
+    <p id="game-about-description">معلومات اللعبة ستظهر هنا إذا كانت متاحة.</p>
+    <p id="game-about-howto"><strong>طريقة اللعب:</strong> <span id="game-about-howto-text">اتبع التعليمات الظاهرة داخل شاشة اللعبة؛ طريقة التحكم تختلف من لعبة لأخرى.</span></p>
+  </section>
+  <section id="related-games-mobile" aria-label="ألعاب من نفس التصنيف">
+    <h3>ألعاب من نفس التصنيف</h3>
+    <div id="related-games-list"></div>
+  </section>
 </div>
 <script>
 (function(){
   'use strict';
   const params = new URLSearchParams(location.search);
   const gameName = (params.get('game') || '').trim();
+  let activeGameName = gameName;
+  const PLAYER_GAME_NAMES = ["1-on-1-soccer","1-on-1-tennis","1.12","1.5","1.8","10-minutes-till-dawn","12-mini-battles","1v1.lol","2048-cupcakes","2048","3D-flight-simulator","8-ball-classic","Alpha_1.2.6","Beta_1.3","Indev","agar-io-lite","age-of-war-2","age-of-war","ages-of-conflict","among-us","angry-birds-showdown","angry-birds-space","angry-birds","awesome-tanks-2","awesome-tanks","backrooms","bacon-may-die","bad-ice-cream-2","bad-ice-cream-3","bad-ice-cream","bad-parenting","bad-piggies","baldis-basics","baseball-bros","basket-bros","basket-random","basketball-legends","basketball-stars","bit-planes","bitlife","blocky-snakes","bloons-TD-2","bloons-TD-3","bloons-TD-4","bloons-TD-5","bloons-TD","bloxorz","blumgi-racers","blumgi-rocket","bob-the-robber-2","bob-the-robber-5","bob-the-robber","bouncy-motors","bow-masters","boxing-random","breaking-the-bank","bubble-shooter","candy-crush","capybara-clicker","car-drawing","car-king-arena","chess","choppy-orc","circloO-2","circloO","clash-of-vikings","cleanup-io","cluster-rush","cookie-clicker","crazy-cars","crazy-cattle-3D","crazy-crash-landing","crazy-motorcycle","crossy-road","cut-the-rope","dadish-2","dadish-3","dadish","death-chase","death-run-3D","demolition-derby-crash-racing","doodle-jump","draw-climber","dreadhead-parkour","drift-boss","drive-mad","duck-life-2","duck-life-3","duck-life-4","duck-life-5","duck-life","ducklings-io","eagle-ride","earn-to-die-2","earn-to-die","eggy-car","elastic-face","escape-road-2","escape-road","escaping-the-prison","evil-glitch","fancy-pants-adventure-2","fancy-pants-adventure","fireboy-and-watergirl-2","fireboy-and-watergirl-3","fireboy-and-watergirl-4","fireboy-and-watergirl","flappy-bird","flood-runner-2","flood-runner-3","flood-runner-4","fnaf-2","fnaf-3","fnaf-4","fnaf","football-bros","football-legends","free-rider-3","fruit-ninja","funny-battle-2","funny-battle","funny-mad-racing","funny-shooter-2","geometry-dash-lite","geometry-dash","geometry-vibes","get-on-top","getaway-shootout","gladi-hoppers","google-baseball","google-dino","granny-2","granny","guess-their-answer","hanger-2","happy-wheels","helix-jump","highway-traffic","hill-climb-racing-lite","hole-io","house-of-hazards","hover-racer-drive","idle-breakout","iron-snout","jetpack-joyride","johnny-trigger","jumping-shell","karate-bros","kart-bros","learn-to-fly-2","learn-to-fly-3","learn-to-fly-idle","learn-to-fly","level-devil","madalin-stunt-cars-2","melon-playground","merge-round-racers","minesweeper","monkey-mart","monster-tracks","moto-x3m-2","moto-x3m-3","moto-x3m-pool-party","moto-x3m-spooky-land","moto-x3m-winter","moto-x3m","noob-miner","opposite-day","ovo-2","ovo-3-dimensions","ovo","pac-man","papas-bakeria","papas-burgeria","papas-cheeseria","papas-cupcakeria","papas-donuteria","papas-freezeria","papas-hot-doggeria","papas-pancakeria","papas-pastaria","papas-pizzeria","papas-scooperia","papas-sushiria","papas-taco-mia","papas-wingeria","paper-io-2","parking-fury-2","parking-fury-3","parking-fury","picos-school","ping-pong-chaos","pixel-speedrun","plants-vs-zombies","plonky","polytrack","poor-bunny","pou","ragdoll-archers","ragdoll-hit","ragdoll-soccer","red-ball-4-vol-1","red-ball-4-vol-2","red-ball-4-vol-3","retro-bowl-college","retro-bowl","retro-highway","retro-ping-pong","riddle-school-2","riddle-school-3","riddle-school-4","riddle-school-5","riddle-school","riddle-transfer-2","riddle-transfer","rocket-soccer-derby","rooftop-snipers-2","rooftop-snipers","run-2","run-3","run","sand-game","short-life","slope-2-player","slope-3","slope","slow-roads","sm-63","sm-64","snow-rider","snow-road","snowball-io","soccer-bros","soccer-random","space-is-key-2","space-is-key","space-waves","spacebar-clicker","speed-stars","sprunki","stack","stacktris","state-io","stick-archers-battle","stick-fighter","stick-merge","stickman-hook","subway-surfers-beijing","subway-surfers-havana","subway-surfers-san-francisco","super-bike-the-champion","super-liquid-soccer","super-star-car","superhot","table-tennis-world-tour","tag","tap-road","temple-of-boom","temple-run-2","territorial-io","the-impossible-quiz-2","the-impossible-quiz","there-is-no-g","they-are-coming","this-is-the-only-level-too","this-is-the-only-level","time-shooter-2","time-shooter-3","tiny-fishing","tomb-of-the-mask","trap-the-cat","trivia-crack","tube-jumpers","tunnel-rush","unicycle-hero","vex-4","vex-5","vex-6","vex-7","vex-8","vex-x3m-2","vex-x3m","volley-random","war-the-knights","we-become-what-we-behold","wheelie-bike","wheely-2","wheely-3","wheely-4","wheely-5","wheely-6","wheely-7","wheely-8","wheely","wordle-unlimited","worlds-hardest-game-2","worlds-hardest-game-3","worlds-hardest-game","wrestle-bros","zombie-rush"];
   const frame = document.getElementById('game-frame');
   const settingsPanel = document.getElementById('settings-panel');
   const settingsToggle = document.getElementById('settings-toggle');
@@ -175,6 +217,16 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   const gameAboutCard = document.getElementById('game-about-card');
   const gameAboutTitle = document.getElementById('game-about-title');
   const gameAboutDescription = document.getElementById('game-about-description');
+  const gameAboutCategory = document.getElementById('game-about-category');
+  const gameAboutHowtoText = document.getElementById('game-about-howto-text');
+  const relatedLeft = document.getElementById('related-left');
+  const relatedRight = document.getElementById('related-right');
+  const relatedMobileList = document.getElementById('related-games-list');
+  const relatedConfirm = document.getElementById('related-confirm');
+  const relatedConfirmText = document.getElementById('related-confirm-text');
+  const relatedConfirmYes = document.getElementById('related-confirm-yes');
+  const relatedConfirmNo = document.getElementById('related-confirm-no');
+  let pendingRelatedGame = '';
   const loginAccountButton = document.getElementById('login-account');
   const logoutAccountButton = document.getElementById('logout-account');
   let isFullscreen = false;
@@ -188,32 +240,107 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
     if(known[name.toLowerCase()]) return known[name.toLowerCase()];
     return name.replace(/\\b[a-z]/g,function(ch){return ch.toUpperCase();});
   }
+  const CATEGORY_ORDER = ["أكشن","مغامرات","سباق","رياضة","قتال","رعب","ألغاز","ألعاب 2 لاعب","IO","أركيد","أخرى"];
+  const CATEGORY_KEYWORDS = {
+    "أكشن":["shooter","shoot","zombie","angry","stick","snout","tank","superhot","bacon","may-die"],
+    "مغامرات":["adventure","temple","subway","run","escape","prison","dadish","duck-life","fireboy","watergirl","level-devil","robber"],
+    "سباق":["racing","race","car","moto","motorcycle","drift","drive","road","bike","rider","kart","polytrack","slope","x3m","derby","motor"],
+    "رياضة":["soccer","football","basket","basketball","tennis","golf","baseball","volley","ping-pong","table-tennis","billiard","billiards","pool","bowling","hockey","8-ball","ball-classic"],
+    "قتال":["fighter","archer","snipers","knights","karate","boxing","wrestle","age-of-war","battle"],
+    "رعب":["fnaf","granny","backrooms","evil","short-life","house-of-hazards","bad-parenting"],
+    "ألغاز":["2048","bloxorz","chess","minesweeper","wordle","riddle","quiz","impossible","cut-the-rope","bubble","sudoku","block"],
+    "ألعاب 2 لاعب":["1-on-1","2-player","bros","random","rooftop","fireboy","watergirl","ping-pong","tube-jumpers","get-on-top","basket-random"],
+    "IO":["io","territorial","agar","hole","paper-io","state-io","cleanup-io","snowball-io","ducklings-io"],
+    "أركيد":["flappy","doodle","clicker","jump","helix","crossy","pac-man","tomb-of-the-mask","tap-road","stack","tiny-fishing"]
+  };
+  function getPlayerGameCategory(name){
+    const n=String(name||'').toLowerCase();
+    if(/8-ball|ball-classic|billiard|pool/.test(n)) return 'رياضة';
+    for(const cat of CATEGORY_ORDER){
+      const words=CATEGORY_KEYWORDS[cat]||[];
+      if(words.some(word=>n.includes(word))) return cat;
+    }
+    return 'أخرى';
+  }
+  function getHowToPlay(name,category){
+    const n=String(name||'').toLowerCase();
+    if(/billiard|billiards|pool|8-ball|ball-classic/.test(n)) return 'وجّه عصا البلياردو نحو الكرة البيضاء، وحدد اتجاه وقوة الضربة، ثم اضغط لتسديد الكرات في الجيوب. اتبع قواعد اللعبة الظاهرة على الشاشة.';
+    if(category==='رياضة') return 'اتبع تعليمات اللعبة على الشاشة؛ قد تستخدم الأسهم أو اللمس أو السحب حسب نوع الرياضة.';
+    if(category==='سباق') return 'استخدم أزرار الاتجاه أو مفاتيح الحركة لتوجيه المركبة، وحاول الوصول إلى خط النهاية. قد تختلف الأزرار حسب اللعبة.';
+    if(category==='ألغاز') return 'اقرأ الهدف الظاهر داخل اللعبة، ثم حرّك القطع أو اختر الإجابات المطلوبة لحل اللغز.';
+    if(category==='أكشن'||category==='قتال') return 'استخدم أزرار التحكم الظاهرة داخل اللعبة أو مفاتيح الحركة، وراقب تعليمات اللعبة للهجوم أو تفادي العقبات.';
+    if(category==='مغامرات') return 'تحرّك داخل المراحل، وتجاوز العقبات، واتبع الهدف المعروض داخل اللعبة.';
+    if(category==='رعب') return 'استكشف المكان بحذر، واتبع هدف المرحلة، وحاول النجاة من المخاطر الظاهرة داخل اللعبة.';
+    if(category==='ألعاب 2 لاعب') return 'اتبع تعليمات اللعبة لتعرف أزرار كل لاعب؛ قد يستخدم اللاعبان مجموعات مفاتيح مختلفة.';
+    return 'اتبع التعليمات الظاهرة عند بداية اللعبة. تختلف طريقة التحكم بين الألعاب وقد تستخدم اللمس أو لوحة المفاتيح أو الفأرة.';
+  }
+  function updateGameDetails(description,howto){
+    const category=getPlayerGameCategory(activeGameName);
+    if(gameAboutTitle) gameAboutTitle.textContent='تفاصيل اللعبة';
+    if(gameAboutCategory) gameAboutCategory.textContent='التصنيف: '+category;
+    if(gameAboutDescription) gameAboutDescription.textContent=(description||'العب '+prettyGameName(activeGameName)+' واستمتع بتجربة مجانية على Matrix Games.').replace(/\\s+/g,' ');
+    if(gameAboutHowtoText) gameAboutHowtoText.textContent=(howto||getHowToPlay(activeGameName,category)).replace(/\\s+/g,' ');
+  }
   function updateGameHeading(){
-    const fallbackName=prettyGameName(gameName);
+    const fallbackName=prettyGameName(activeGameName);
     gameTitleElement.textContent=fallbackName || 'Matrix Games';
     gameDescriptionElement.textContent='العب ' + (fallbackName || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
+    let actualDescription='',actualTitle='',actualHowto='';
     try{
       const doc=frame.contentDocument;
-      if(!doc) return;
-      const actualTitle=(doc.querySelector('meta[property="og:title"]')?.content || doc.title || '').trim();
-      if(actualTitle && actualTitle.length<100 && !/^(index|game|offline html games pack)$/i.test(actualTitle)){
-        gameTitleElement.textContent=actualTitle.replace(/\\s*[|–—-]\\s*(matrix games.*|play online.*)$/i,'').trim() || fallbackName;
+      if(doc){
+        actualTitle=(doc.querySelector('meta[property="og:title"]')?.content || doc.title || '').trim();
+        actualDescription=(doc.querySelector('meta[name="description"]')?.content || doc.querySelector('meta[property="og:description"]')?.content || doc.querySelector('[data-game-description]')?.textContent || '').trim();
+        actualHowto=(doc.querySelector('meta[name="game:instructions"]')?.content || doc.querySelector('[data-game-instructions]')?.textContent || doc.querySelector('[itemprop="gameplay"]')?.textContent || '').trim();
       }
-      const actualDescription=(
-        doc.querySelector('meta[name="description"]')?.content ||
-        doc.querySelector('meta[property="og:description"]')?.content ||
-        doc.querySelector('[data-game-description]')?.textContent ||
-        ''
-      ).trim();
-      if(actualDescription){
-        gameDescriptionElement.textContent=actualDescription.replace(/\\s+/g,' ');
-      }
-    }catch(e){
-      // بعض الألعاب قد تنتقل إلى نطاق خارجي؛ نحتفظ بالاسم والوصف الاحتياطيين.
+    }catch(e){}
+    if(actualTitle && actualTitle.length<100 && !/^(index|game|offline html games pack)$/i.test(actualTitle) && actualTitle.length>fallbackName.length+5){
+      gameTitleElement.textContent=actualTitle.replace(/\\s*[|–—-]\\s*(matrix games.*|play online.*)$/i,'').trim() || fallbackName;
     }
-    if(gameAboutTitle) gameAboutTitle.textContent=gameTitleElement.textContent || 'عن اللعبة';
-    if(gameAboutDescription) gameAboutDescription.textContent=gameDescriptionElement.textContent || 'العب واستمتع على Matrix Games.';
+    if(actualDescription) gameDescriptionElement.textContent=actualDescription.replace(/\\s+/g,' ');
+    updateGameDetails(actualDescription,actualHowto);
   }
+  function renderRelatedGames(){
+    const category=getPlayerGameCategory(activeGameName);
+    const related=PLAYER_GAME_NAMES.filter(name=>name!==activeGameName && getPlayerGameCategory(name)===category).slice(0,6);
+    const makeTile=name=>'<button type="button" class="related-game-tile" data-related-game="'+encodeURIComponent(name)+'">'+prettyGameName(name)+'<small>'+category+'</small></button>';
+    if(relatedLeft) relatedLeft.innerHTML='<h3 class="related-rail-title">من نفس التصنيف</h3>'+related.slice(0,3).map(makeTile).join('');
+    if(relatedRight) relatedRight.innerHTML='<h3 class="related-rail-title">ألعاب أخرى</h3>'+related.slice(3,6).map(makeTile).join('');
+    if(relatedMobileList) relatedMobileList.innerHTML=related.length?related.map(makeTile).join(''):'<p>لا توجد ألعاب أخرى في هذا التصنيف حاليًا.</p>';
+    document.querySelectorAll('[data-related-game]').forEach(button=>{
+      button.addEventListener('click',function(){openRelatedConfirmation(this.getAttribute('data-related-game'));});
+    });
+  }
+  function openRelatedConfirmation(name){
+    pendingRelatedGame=name;
+    relatedConfirmText.textContent='هل تريد مغادرة لعبة '+prettyGameName(activeGameName)+' وفتح لعبة '+prettyGameName(name)+'؟';
+    relatedConfirm.classList.add('show');
+    relatedConfirmYes.focus();
+  }
+  function closeRelatedConfirmation(){
+    relatedConfirm.classList.remove('show');
+    pendingRelatedGame='';
+  }
+  function openRelatedGame(){
+    if(!pendingRelatedGame)return;
+    const next=pendingRelatedGame;
+    closeRelatedConfirmation();
+    activeGameName=next;
+    try{history.replaceState({},'', '/player.html?game='+encodeURIComponent(next));}catch(e){}
+    gameTitleElement.textContent=prettyGameName(next);
+    gameDescriptionElement.textContent='العب '+prettyGameName(next)+' مباشرةً على Matrix Games.';
+    updateGameDetails('', '');
+    renderRelatedGames();
+    message.classList.remove('show');
+    frame.src='/offline/'+encodeURIComponent(next)+'.html';
+    if(!document.body.classList.contains('player-fullscreen')) {
+      try{document.getElementById('player').scrollTop=0;}catch(e){}
+    }
+  }
+  relatedConfirmYes.addEventListener('click',openRelatedGame);
+  relatedConfirmNo.addEventListener('click',closeRelatedConfirmation);
+  relatedConfirm.addEventListener('click',function(e){if(e.target===relatedConfirm)closeRelatedConfirmation();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&relatedConfirm.classList.contains('show')){e.preventDefault();closeRelatedConfirmation();}});
   // Unity يستدعي هذه الدالة بعد تسجيل الدخول أو الخروج، من دون إعادة تحميل اللعبة.
   window.matrixSetSignedIn=function(signedIn){
     const authenticated=!!signedIn;
@@ -226,86 +353,13 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   }
   gameTitleElement.textContent=prettyGameName(gameName) || 'Matrix Games';
   gameDescriptionElement.textContent='العب ' + (prettyGameName(gameName) || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
-  function centerAndScaleGameContent(doc){
-    if(!doc) return;
-    try{
-      if(!doc.getElementById('matrix-player-layout-style')){
-        const style=doc.createElement('style');
-        style.id='matrix-player-layout-style';
-        style.textContent=`
-          html,body{width:100%!important;min-width:0!important;margin:0!important;overflow-x:hidden!important;}
-          body{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;}
-          body>main,body>section,body>div,body>canvas,body>iframe{margin-left:auto!important;margin-right:auto!important;max-width:100%!important;}
-          canvas,video{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:calc(100vh - 270px)!important;object-fit:contain!important;margin-left:auto!important;margin-right:auto!important;}
-          `;
-        (doc.head||doc.documentElement).appendChild(style);
-      }
-      const visuals=Array.from(doc.querySelectorAll('canvas,video,iframe,embed,object'))
-        .filter(function(el){const r=el.getBoundingClientRect();return r.width>40&&r.height>30;})
-        .sort(function(a,b){
-          const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();
-          return (rb.width*rb.height)-(ra.width*ra.height);
-        });
-      const visual=visuals[0];
-      if(visual && visual.tagName!=='IFRAME' && visual.tagName!=='EMBED' && visual.tagName!=='OBJECT'){
-        visual.style.setProperty('display','block','important');
-        visual.style.setProperty('width','100%','important');
-        visual.style.setProperty('height','auto','important');
-        visual.style.setProperty('max-width','100%','important');
-        visual.style.setProperty('max-height','calc(100vh - 270px)','important');
-        visual.style.setProperty('object-fit','contain','important');
-        let parent=visual.parentElement,depth=0;
-        while(parent && parent!==doc.body && depth<8){
-          parent.style.setProperty('width','100%','important');
-          parent.style.setProperty('height','auto','important');
-          parent.style.setProperty('max-width','100%','important');
-          parent.style.setProperty('margin-left','auto','important');
-          parent.style.setProperty('margin-right','auto','important');
-          parent=parent.parentElement;depth++;
-        }
-      } else if(visual){
-        visual.style.setProperty('display','block','important');
-        visual.style.setProperty('width','100%','important');
-        visual.style.setProperty('max-width','100%','important');
-        visual.style.setProperty('margin-left','auto','important');
-        visual.style.setProperty('margin-right','auto','important');
-      }
-    }catch(e){}
-  }
-  function positionGameAboutCard(){
-    if(!gameAboutCard || document.body.classList.contains('player-fullscreen')) return;
-    let top=390;
-    try{
-      const doc=frame.contentDocument;
-      const frameRect=frame.getBoundingClientRect();
-      if(doc){
-        const candidates=Array.from(doc.querySelectorAll('canvas,video,iframe,embed,object'))
-          .filter(function(el){const r=el.getBoundingClientRect();return r.width>40&&r.height>30;})
-          .sort(function(a,b){const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();return (rb.width*rb.height)-(ra.width*ra.height);});
-        if(candidates.length){
-          const r=candidates[0].getBoundingClientRect();
-          top=frameRect.top+r.bottom+12;
-        }else{
-          top=frameRect.top+Math.min(300,window.innerHeight*0.34);
-        }
-      }
-    }catch(e){}
-    const cardHeight=gameAboutCard.offsetHeight||75;
-    top=Math.max(frame.offsetTop+180,Math.min(top,window.innerHeight-cardHeight-8));
-    gameAboutCard.style.top=top+'px';
-  }
   frame.addEventListener('load',function(){
     message.classList.remove('show');
     updateGameHeading();
-    centerAndScaleGameContent(frame.contentDocument);
-    [200,600,1200].forEach(function(delay){setTimeout(function(){
-      centerAndScaleGameContent(frame.contentDocument);
-      positionGameAboutCard();
-    },delay);});
-    positionGameAboutCard();
+    renderRelatedGames();
   });
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
-  frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
+  frame.src = '/offline/' + encodeURIComponent(activeGameName) + '.html';
 
   function dispatchKeyToWindow(win,key,type){
     try{
