@@ -11,7 +11,13 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;color:#eaffef;font-family:Arial,Tahoma,sans-serif;overscroll-behavior:none;touch-action:manipulation}
 #player{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0a2812 0%,#020602 58%);overflow:hidden}
 /* وضع النافذة: إطار لعب داخل صفحة اللاعب. التكبير يمد هذا الإطار إلى الشاشة كاملة. */
-#game-frame{position:absolute;inset:60px 8px 10px;width:calc(100% - 16px);height:calc(100% - 70px);border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
+#game-frame{position:absolute;top:calc(env(safe-area-inset-top,0px) + 112px);right:8px;bottom:10px;left:8px;width:auto;height:auto;border:1px solid rgba(0,255,102,.72);border-radius:14px;background:#000;z-index:1;box-shadow:0 0 18px rgba(0,255,102,.10),inset 0 0 10px rgba(0,255,102,.06);overflow:hidden}
+#game-heading{position:absolute;top:calc(env(safe-area-inset-top,0px) + 51px);left:10px;right:10px;height:52px;padding:4px 12px;display:flex;align-items:center;justify-content:center;gap:10px;direction:ltr;z-index:6;pointer-events:none;border:1px solid rgba(0,255,102,.55);border-radius:12px;background:linear-gradient(110deg,rgba(3,23,8,.96),rgba(7,43,18,.96),rgba(2,15,5,.97));box-shadow:0 3px 14px rgba(0,0,0,.36),0 0 12px rgba(0,255,102,.08)}
+#matrix-game-logo{width:36px;height:36px;flex:0 0 36px;object-fit:cover;border-radius:9px;border:1px solid rgba(0,255,102,.6);box-shadow:0 0 9px rgba(0,255,102,.16)}
+#game-heading-copy{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;direction:rtl;text-align:center}
+#game-title{margin:0;max-width:100%;font-size:15px;line-height:1.15;font-weight:800;color:#eaffef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 8px rgba(0,255,102,.17)}
+#game-description{margin:0;max-width:100%;font-size:10px;line-height:1.2;font-weight:500;color:#a9d9b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.player-fullscreen #game-heading{display:none}
 #player-ui{position:absolute;inset:0;z-index:20;pointer-events:none}
 .ui-button,.control-button,.drag-handle,.settings-panel,.settings-toggle,.tools-panel,.menu-action{pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .ui-button,.settings-toggle{position:relative;border:1px solid rgba(105,255,159,.78);color:#eaffef;background:linear-gradient(155deg,rgba(21,70,37,.98),rgba(3,22,9,.98) 58%,rgba(1,10,4,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 0 rgba(0,0,0,.55),0 2px 0 rgba(0,90,38,.9),0 0 10px rgba(0,255,102,.13);border-radius:11px;font-weight:700;font-size:13px;min-height:40px;padding:7px 10px;text-shadow:0 1px 2px #000}
@@ -31,6 +37,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020602;col
 .tools-panel{max-height:calc(100vh - 70px);overflow-y:auto}
 .menu-action{min-height:43px;border:1px solid rgba(0,255,102,.55);border-radius:10px;color:#eaffef;background:linear-gradient(150deg,rgba(13,52,26,.96),rgba(2,16,6,.98));font-weight:700;font-size:12px;padding:8px 6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 2px 0 rgba(0,0,0,.4);text-align:center}
 .menu-action:active{transform:translateY(1px);background:#075326}
+.menu-action[hidden]{display:none!important}
 #touch-layer{position:absolute;inset:0;pointer-events:none;z-index:25}
 /* زر مثلث صغير داخل الصف العلوي؛ يبقى ظاهرًا عندما نخفي بقية الواجهة */
 #controls-visibility-toggle{position:relative;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;display:flex;align-items:center;justify-content:center;z-index:32;pointer-events:auto;touch-action:manipulation;border:1px solid rgba(116,255,165,.92);border-radius:11px;color:#caffd9;background:linear-gradient(150deg,rgba(22,88,43,.99),rgba(1,18,7,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -2px 0 rgba(0,0,0,.45),0 2px 0 rgba(0,90,38,.85),0 0 11px rgba(0,255,102,.2);font-size:17px;font-weight:900;line-height:1}
@@ -57,7 +64,7 @@ body.toolbar-hidden #settings-panel,body.toolbar-hidden .tools-panel{display:non
 body.player-fullscreen #game-frame{inset:0;width:100%;height:100%;border-radius:0;border:0;box-shadow:none}
 body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:calc(env(safe-area-inset-top,0px) + 55px)}
 @media (max-width:520px){#top-actions{left:6px;right:6px;gap:5px}#top-actions .ui-button,.settings-toggle{font-size:11px;min-height:38px;padding:6px 8px}#settings-toggle{min-width:37px;padding-inline:7px}
-#tools-toggle{min-width:68px;padding-inline:8px;font-size:11px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-frame{inset:55px 5px 7px;width:calc(100% - 10px);height:calc(100% - 62px);border-radius:11px}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
+#tools-toggle{min-width:68px;padding-inline:8px;font-size:11px}#dpad{width:calc(158px * var(--arrow-size));height:calc(174px * var(--arrow-size));left:max(7px,env(safe-area-inset-left,0px));bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 6px)}.dpad-grid{gap:4px;padding:6px}.control-button{border-radius:11px}#space-control{right:max(8px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px);width:calc(112px * var(--space-size));height:calc(68px * var(--space-size))}#game-frame{top:calc(env(safe-area-inset-top,0px) + 105px);right:5px;bottom:7px;left:5px;width:auto;height:auto;border-radius:11px}#game-heading{top:calc(env(safe-area-inset-top,0px) + 50px);left:6px;right:6px;height:48px;padding:3px 8px;gap:7px}#matrix-game-logo{width:30px;height:30px;flex-basis:30px;border-radius:7px}#game-heading-copy{max-width:calc(100% - 38px)}#game-title{font-size:13px}#game-description{font-size:9px}.tools-grid{gap:6px}.menu-action{font-size:11px;padding:7px 4px}}
 </style>
 </head>
 <body>
@@ -71,6 +78,13 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
       <button class="ui-button" id="fullscreen-toggle" aria-label="تكبير مساحة اللعب">⛶ تكبير</button>
       <button id="controls-visibility-toggle" type="button" aria-label="إخفاء كل أزرار الواجهة" aria-pressed="false" title="إخفاء كل أزرار الواجهة"><span class="triangle">◀</span></button>
     </div>
+    <div id="game-heading" aria-live="polite">
+      <img id="matrix-game-logo" src="/assets/matrix-logo-192.jpg" alt="Matrix Games" onerror="this.onerror=null;this.src='/assets/matrix-favicon-48.png'">
+      <div id="game-heading-copy">
+        <h1 id="game-title">Matrix Games</h1>
+        <p id="game-description">تحميل معلومات اللعبة...</p>
+      </div>
+    </div>
     <div class="tools-panel" id="tools-panel" aria-label="أدوات اللعبة">
       <div class="tools-title">أدوات اللعبة</div>
       <div class="tools-grid">
@@ -78,7 +92,7 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
         <button class="menu-action" id="save-progress">▣ حفظ التقدم</button>
         <button class="menu-action" id="sync-progress">⟳ مزامنة التقدم</button>
         <button class="menu-action" id="login-account">♙ تسجيل الدخول</button>
-        <button class="menu-action" id="logout-account">⇥ تسجيل الخروج</button>
+        <button class="menu-action" id="logout-account" hidden>⇥ تسجيل الخروج</button>
       </div>
     </div>
     <div id="settings-panel">
@@ -121,18 +135,63 @@ body.player-fullscreen #settings-panel,body.player-fullscreen .tools-panel{top:c
   const arrowSizeInput = document.getElementById('arrow-size');
   const spaceSizeInput = document.getElementById('space-size');
   const message = document.getElementById('game-message');
+  const gameTitleElement = document.getElementById('game-title');
+  const gameDescriptionElement = document.getElementById('game-description');
+  const loginAccountButton = document.getElementById('login-account');
+  const logoutAccountButton = document.getElementById('logout-account');
   let isFullscreen = false;
   let heldKeys = new Set();
 
   function unityCall(msg){try{if(window.Unity && typeof window.Unity.call==='function') window.Unity.call(msg);}catch(e){}}
   function showMessage(text){message.textContent=text;message.classList.add('show');}
+  function prettyGameName(value){
+    const name=String(value||'').replace(/[-_]+/g,' ').replace(/\\s+/g,' ').trim();
+    const known={'1v1 lol':'1v1.LOL','fnaf':'FNAF','fnaf 2':'FNAF 2','fnaf 3':'FNAF 3','fnaf 4':'FNAF 4'};
+    if(known[name.toLowerCase()]) return known[name.toLowerCase()];
+    return name.replace(/\\b[a-z]/g,function(ch){return ch.toUpperCase();});
+  }
+  function updateGameHeading(){
+    const fallbackName=prettyGameName(gameName);
+    gameTitleElement.textContent=fallbackName || 'Matrix Games';
+    gameDescriptionElement.textContent='العب ' + (fallbackName || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
+    try{
+      const doc=frame.contentDocument;
+      if(!doc) return;
+      const actualTitle=(doc.querySelector('meta[property="og:title"]')?.content || doc.title || '').trim();
+      if(actualTitle && actualTitle.length<100 && !/^(index|game|offline html games pack)$/i.test(actualTitle)){
+        gameTitleElement.textContent=actualTitle.replace(/\\s*[|–—-]\\s*(matrix games.*|play online.*)$/i,'').trim() || fallbackName;
+      }
+      const actualDescription=(
+        doc.querySelector('meta[name="description"]')?.content ||
+        doc.querySelector('meta[property="og:description"]')?.content ||
+        doc.querySelector('[data-game-description]')?.textContent ||
+        ''
+      ).trim();
+      if(actualDescription){
+        gameDescriptionElement.textContent=actualDescription.replace(/\\s+/g,' ');
+      }
+    }catch(e){
+      // بعض الألعاب قد تنتقل إلى نطاق خارجي؛ نحتفظ بالاسم والوصف الاحتياطيين.
+    }
+  }
+  // Unity يستدعي هذه الدالة بعد تسجيل الدخول أو الخروج، من دون إعادة تحميل اللعبة.
+  window.matrixSetSignedIn=function(signedIn){
+    const authenticated=!!signedIn;
+    if(loginAccountButton) loginAccountButton.hidden=authenticated;
+    if(logoutAccountButton) logoutAccountButton.hidden=!authenticated;
+  };
   if(!gameName || /[\\/]/.test(gameName) || gameName==='.' || gameName==='..'){
     showMessage('تعذر تحديد اللعبة. ارجع إلى القائمة وافتح اللعبة مرة أخرى.');
     return;
   }
-  frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
-  frame.addEventListener('load',function(){message.classList.remove('show');});
+  gameTitleElement.textContent=prettyGameName(gameName) || 'Matrix Games';
+  gameDescriptionElement.textContent='العب ' + (prettyGameName(gameName) || 'هذه اللعبة') + ' مباشرةً على Matrix Games.';
+  frame.addEventListener('load',function(){
+    message.classList.remove('show');
+    updateGameHeading();
+  });
   frame.addEventListener('error',function(){showMessage('تعذر تحميل اللعبة. تحقق من الاتصال بالإنترنت ثم اضغط رجوع وأعد المحاولة.');});
+  frame.src = '/offline/' + encodeURIComponent(gameName) + '.html';
 
   function dispatchKeyToWindow(win,key,type){
     try{
