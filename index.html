@@ -2247,9 +2247,9 @@ function startGameFrameLoad(iframe,game,token,options={}){
             }
             elapsed+=300;
             // تأكيد قصير أن اللعبة بدأت فعلًا، دون إبقاء شاشة اللوجو عدة ثوانٍ إضافية.
-            if(elapsed>=600 && isExpectedDocument() && gameFrameLooksReady(iframe)){
+            if(elapsed>=300 && isExpectedDocument() && gameFrameLooksReady(iframe)){
                 positiveChecks++;
-                if(positiveChecks>=2)finishGameFrameLoading(token,options);
+                if(positiveChecks>=1)finishGameFrameLoading(token,options);
             }else{
                 positiveChecks=0;
             }
@@ -2771,7 +2771,7 @@ async function openGame(encodedName, routeOnly=false, skipPreviousSave=false){
         const restoreResult=await Promise.race([
             restorePromise,
             new Promise(resolve=>{
-                restoreTimer=setTimeout(()=>resolve({finished:false,value:false}),1400);
+                restoreTimer=setTimeout(()=>resolve({finished:false,value:false}),500);
             })
         ]);
         if(restoreTimer)clearTimeout(restoreTimer);
