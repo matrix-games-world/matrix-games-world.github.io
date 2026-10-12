@@ -407,12 +407,69 @@ iframe{width:100%;height:100%;border:none}
 }
 .game-player-title-wrap h2{margin:2px 0 0;color:#00ff66;font-size:20px;line-height:1.25;text-align:right}
 @media(max-width:700px){.game-player-title-wrap h2{font-size:17px}}</style>
+
+<style id="matrix-network-status-style">
+.network-status-pill{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    flex:0 0 auto;padding:8px 12px;border:1px solid rgba(0,255,102,.32);
+    border-radius:999px;background:rgba(4,18,7,.94);color:#9fffb8;
+    font-size:12px;font-weight:900;white-space:nowrap;direction:rtl;
+    box-shadow:0 0 12px rgba(0,255,102,.08)
+}
+.network-status-dot{
+    display:inline-block;width:9px;height:9px;flex:0 0 9px;border-radius:50%;
+    background:#00ff66;box-shadow:0 0 10px rgba(0,255,102,.82);
+    animation:matrixOnlinePulse 1.8s ease-in-out infinite
+}
+.network-status-pill.is-offline{
+    color:#ffd7d7;border-color:rgba(255,75,75,.42);background:rgba(38,7,7,.94)
+}
+.network-status-pill.is-offline .network-status-dot{
+    background:#ff4d5b;box-shadow:0 0 9px rgba(255,77,91,.75);animation:none
+}
+.network-status-pill.is-checking .network-status-dot{
+    background:#ffcf5a;box-shadow:0 0 8px rgba(255,207,90,.55);animation:none
+}
+@keyframes matrixOnlinePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.52;transform:scale(.82)}}
+.matrix-network-offline .game-card{cursor:not-allowed;border-color:rgba(255,77,91,.28)}
+.matrix-network-offline .game-card .game-thumb{filter:grayscale(.78);opacity:.7}
+.matrix-network-offline .game-card::before{
+    content:"أوفلاين";position:absolute;top:50px;left:16px;z-index:4;
+    padding:5px 8px;border-radius:999px;background:rgba(65,8,12,.94);
+    color:#ffd7d7;border:1px solid rgba(255,77,91,.48);
+    font-size:10px;font-weight:900;pointer-events:none
+}
+#matrix-network-notice{
+    position:fixed;left:50%;bottom:22px;transform:translate(-50%,16px);
+    z-index:100000;max-width:min(92vw,520px);padding:13px 18px;
+    border:1px solid rgba(255,77,91,.52);border-radius:14px;
+    background:rgba(28,7,9,.97);color:#ffe1e1;font-size:13px;font-weight:800;
+    line-height:1.7;text-align:center;box-shadow:0 10px 35px rgba(0,0,0,.45);
+    opacity:0;visibility:hidden;transition:opacity .18s ease,transform .18s ease,visibility .18s ease
+}
+#matrix-network-notice.is-visible{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.game-network-status{margin-inline:4px}
+@media(max-width:800px){
+    .network-status-pill{font-size:11px;padding:7px 9px;gap:6px}
+    .top-header .network-status-pill{order:3}
+    .game-network-status{margin-inline-start:auto}
+}
+@media(max-width:520px){
+    .game-detail-topbar{flex-wrap:wrap}
+    .game-network-status{order:3}
+}
+</style>
+
 </head>
 
 <body id="top">
 
 <div class="top-header">
     <div class="logo-title"><img class="site-logo" src="assets/matrix-logo-192.jpg" alt="Matrix Games: The World"><span id="header-site-title">Matrix Games: The World</span></div>
+    <div class="network-status-pill" data-network-status role="status" aria-live="polite" title="حالة الاتصال بالإنترنت">
+        <span class="network-status-dot" aria-hidden="true"></span>
+        <span data-network-label>جارٍ التحقق...</span>
+    </div>
     <div class="header-actions">
         <input type="search" id="search-input" class="search-box"
                name="matrix_game_search_field"
@@ -883,6 +940,10 @@ iframe{width:100%;height:100%;border:none}
             <div class="game-detail-heading">
                 <div class="game-detail-kicker">MATRIX GAMES • GAME PAGE</div>
                 <div id="game-detail-meta" class="game-detail-meta">🎮 ألعاب</div>
+            </div>
+            <div class="network-status-pill game-network-status" data-network-status role="status" aria-live="polite" title="حالة الاتصال بالإنترنت">
+                <span class="network-status-dot" aria-hidden="true"></span>
+                <span data-network-label>جارٍ التحقق...</span>
             </div>
             <div class="game-detail-account-actions">
                 <button id="game-auth-btn" class="auth-trigger-btn game-account-btn"
@@ -1624,6 +1685,125 @@ function prettyName(name){
 function gameUrl(name){
     return "offline/" + encodeURIComponent(name) + ".html";
 }
+
+let matrixNetworkIsOnline = typeof navigator === "undefined" ? true : navigator.onLine;
+let matrixNetworkCheckComplete = false;
+let matrixNetworkCheckedAt = 0;
+let matrixNetworkCheckPromise = null;
+let matrixNetworkNoticeTimer = null;
+
+function updateNetworkStatus(isOnline, checking=false){
+    if(!checking){
+        matrixNetworkIsOnline=!!isOnline;
+    }
+    const displayOnline=checking ? matrixNetworkIsOnline : !!isOnline;
+    document.documentElement.classList.toggle("matrix-network-offline",!displayOnline && !checking);
+
+    document.querySelectorAll("[data-network-status]").forEach(el=>{
+        el.classList.toggle("is-offline",!displayOnline && !checking);
+        el.classList.toggle("is-checking",!!checking);
+        const label=el.querySelector("[data-network-label]");
+        if(label)label.textContent=checking?"جارٍ التحقق...":(displayOnline?"أونلاين":"أوفلاين");
+        el.setAttribute("aria-label",checking?"جارٍ التحقق من الاتصال":(displayOnline?"متصل بالإنترنت":"غير متصل بالإنترنت"));
+    });
+}
+
+function showNetworkNotice(message){
+    let notice=document.getElementById("matrix-network-notice");
+    if(!notice){
+        notice=document.createElement("div");
+        notice.id="matrix-network-notice";
+        notice.setAttribute("role","status");
+        notice.setAttribute("aria-live","polite");
+        document.body.appendChild(notice);
+    }
+    notice.textContent=message||"الاتصال بالإنترنت غير متاح. اتصل بالشبكة قبل تشغيل اللعبة.";
+    notice.classList.add("is-visible");
+    clearTimeout(matrixNetworkNoticeTimer);
+    matrixNetworkNoticeTimer=setTimeout(()=>notice.classList.remove("is-visible"),4200);
+}
+
+async function verifyNetworkConnectivity(){
+    if(typeof navigator!=="undefined" && !navigator.onLine){
+        matrixNetworkCheckComplete=true;
+        matrixNetworkCheckedAt=Date.now();
+        updateNetworkStatus(false);
+        return false;
+    }
+    if(matrixNetworkCheckPromise)return matrixNetworkCheckPromise;
+
+    matrixNetworkCheckPromise=(async()=>{
+        updateNetworkStatus(matrixNetworkIsOnline,true);
+        let timeoutId=null;
+        const controller=("AbortController" in window)?new AbortController():null;
+        try{
+            if(controller)timeoutId=setTimeout(()=>controller.abort(),4500);
+            const url=location.origin+"/assets/matrix-favicon-48.png?network_check="+Date.now();
+            const response=await fetch(url,{
+                method:"GET",
+                cache:"no-store",
+                credentials:"same-origin",
+                signal:controller?controller.signal:undefined
+            });
+            if(!response.ok)throw new Error("Network probe returned "+response.status);
+            updateNetworkStatus(true);
+            matrixNetworkCheckComplete=true;
+            matrixNetworkCheckedAt=Date.now();
+            return true;
+        }catch(e){
+            updateNetworkStatus(false);
+            matrixNetworkCheckComplete=true;
+            matrixNetworkCheckedAt=Date.now();
+            return false;
+        }finally{
+            if(timeoutId!==null)clearTimeout(timeoutId);
+            matrixNetworkCheckPromise=null;
+        }
+    })();
+
+    return matrixNetworkCheckPromise;
+}
+
+async function ensureNetworkBeforeGame(){
+    if(typeof navigator!=="undefined" && !navigator.onLine){
+        matrixNetworkCheckComplete=true;
+        matrixNetworkCheckedAt=Date.now();
+        updateNetworkStatus(false);
+        showNetworkNotice("أنت أوفلاين حاليًا. وصّل الإنترنت أولًا، وبعدها تقدر تشغّل اللعبة.");
+        return false;
+    }
+
+    const stale=Date.now()-matrixNetworkCheckedAt>20000;
+    if(!matrixNetworkCheckComplete || stale || !matrixNetworkIsOnline){
+        const connected=await verifyNetworkConnectivity();
+        if(!connected){
+            showNetworkNotice("الإنترنت غير متاح حاليًا. اللعبة مش هتفتح لحد ما الاتصال يرجع.");
+            return false;
+        }
+    }
+    return matrixNetworkIsOnline;
+}
+
+function initializeNetworkStatus(){
+    updateNetworkStatus(false,true);
+    verifyNetworkConnectivity();
+}
+
+window.addEventListener("online",()=>verifyNetworkConnectivity());
+window.addEventListener("offline",()=>{
+    matrixNetworkCheckComplete=true;
+    matrixNetworkCheckedAt=Date.now();
+    updateNetworkStatus(false);
+});
+window.addEventListener("focus",()=>{
+    if(typeof navigator==="undefined" || navigator.onLine)verifyNetworkConnectivity();
+});
+document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden && (typeof navigator==="undefined" || navigator.onLine))verifyNetworkConnectivity();
+});
+setInterval(()=>{
+    if(typeof navigator==="undefined" || navigator.onLine)verifyNetworkConnectivity();
+},45000);
 const GAME_PLACEHOLDER_IMAGE = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#061406"/><stop offset="100%" stop-color="#010301"/></linearGradient></defs><rect width="640" height="360" rx="28" fill="url(#g)"/><rect x="14" y="14" width="612" height="332" rx="24" fill="none" stroke="#00ff66" stroke-width="3" opacity=".7"/><text x="320" y="158" text-anchor="middle" fill="#00ff66" font-size="34" font-family="Arial,sans-serif" font-weight="900">Matrix Games: The World</text><text x="320" y="205" text-anchor="middle" fill="#9bb39b" font-size="18" font-family="Arial,sans-serif">Loading poster…</text></svg>');
 
 function imageUrl(name){
@@ -2523,6 +2703,7 @@ function toggleCurrentGameFavorite(){
 }
 
 async function openGame(encodedName, routeOnly=false, skipPreviousSave=false){
+    if(!(await ensureNetworkBeforeGame()))return;
     const name=decodeURIComponent(encodedName);
     const game=catalog.find(g=>g.name===name);
     const iframe=document.getElementById("game-container");
@@ -3677,6 +3858,7 @@ refreshLocalAnalyticsPanel();
 renderCategoryBar();
 renderHomeSections();
 renderGames();
+initializeNetworkStatus();
 
 // تحميل الألعاب والإعدادات المخصصة من Firestore تلقائيًا عند فتح الموقع.
 function routeFromUrl(){
