@@ -1879,36 +1879,78 @@ function clearGameLoadingWatchers(){
 }
 
 function canvasHasVisiblePixels(canvas){
-    if(!canvas || canvas.width<80 || canvas.height<60)return false;
-    // Canvas 2D: نتأكد أن الرسم بدأ فعلًا بدل مساحة سوداء فارغة.
+    if(!canvas || canvas.width<120 || canvas.height<80)return false;
+    const points=[[.15,.2],[.5,.2],[.85,.2],[.15,.5],[.5,.5],[.85,.5],[.15,.8],[.5,.8],[.85,.8]];
+    const samples=[];
     try{
         const ctx2d=canvas.getContext("2d",{willReadFrequently:true});
         if(ctx2d){
-            const points=[[.2,.2],[.5,.2],[.8,.2],[.2,.5],[.5,.5],[.8,.5],[.2,.8],[.5,.8],[.8,.8]];
             for(const point of points){
                 const x=Math.min(canvas.width-1,Math.max(0,Math.floor(canvas.width*point[0])));
                 const y=Math.min(canvas.height-1,Math.max(0,Math.floor(canvas.height*point[1])));
-                const px=ctx2d.getImageData(x,y,1,1).data;
-                if(px[3]>0 && (px[0]+px[1]+px[2])>45)return true;
+                const p=ctx2d.getImageData(x,y,1,1).data;
+                samples.push([p[0],p[1],p[2],p[3]]);
             }
-            return false;
-        }
-    }catch(e){}
-
-    // WebGL/WebGL2: نفحص نقاطًا متعددة من صورة الإطار الحالية.
-    try{
-        const gl=canvas.getContext("webgl2")||canvas.getContext("webgl")||canvas.getContext("experimental-webgl");
-        if(gl){
-            const points=[[.2,.2],[.5,.2],[.8,.2],[.2,.5],[.5,.5],[.8,.5],[.2,.8],[.5,.8],[.8,.8]];
+        }else{
+            const gl=canvas.getContext("webgl2")||canvas.getContext("webgl")||canvas.getContext("experimental-webgl");
+            if(!gl)return false;
             const pixel=new Uint8Array(4);
             for(const point of points){
                 const x=Math.min(canvas.width-1,Math.max(0,Math.floor(canvas.width*point[0])));
                 const y=Math.min(canvas.height-1,Math.max(0,Math.floor(canvas.height*point[1])));
                 gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
-                if((pixel[0]+pixel[1]+pixel[2])>45)return true;
+                samples.push([pixel[0],pixel[1],pixel[2],pixel[3]]);
             }
         }
-    }catch(e){}
+    }catch(e){return false;}
+
+    const bright=samples.filter(p=>p[3]>0 && (p[0]+p[1]+p[2])>75);
+    if(bright.length<3)return false;
+
+    // لا نعتبر نقطة مضيئة واحدة أو خلفية سادة دليلًا على أن اللعبة بدأت.
+    for(let i=0;i<bright.length;i++){
+        for(let j=i+1;j<bright.length;j++){
+            const delta=Math.abs(bright[i][0]-bright[j][0])+
+                Math.abs(bright[i][1]-bright[j][1])+
+                Math.abs(bright[i][2]-bright[j][2]);
+            if(delta>70)return true;
+        }
+    }
+    return false;
+}
+
+function gameElementIsVisible(el,doc,minWidth=12,minHeight=10){
+    const rect=el.getBoundingClientRect();
+    const style=doc.defaultView?.getComputedStyle(el);
+    return !!style && rect.width>=minWidth && rect.height>=minHeight &&
+        style.display!=="none" && style.visibility!=="hidden" &&
+        Number(style.opacity||1)>0;
+}
+
+function gameHasVisibleLoadingLayer(doc){
+    const selectors=[
+        '[aria-busy="true"]',
+        '[id*="loading" i]','[class*="loading" i]',
+        '[id*="preload" i]','[class*="preload" i]',
+        '[id*="splash" i]','[class*="splash" i]'
+    ];
+    for(const el of doc.querySelectorAll(selectors.join(","))){
+        if(!gameElementIsVisible(el,doc,80,35))continue;
+        const rect=el.getBoundingClientRect();
+        // تجاهل أي label صغير أو اسم عنصر عابر؛ نبحث عن طبقة انتظار تغطي جزءًا واضحًا من اللعبة.
+        if(rect.width>=Math.min(180,doc.documentElement.clientWidth*.35) &&
+           rect.height>=Math.min(70,doc.documentElement.clientHeight*.12))return true;
+    }
+    return false;
+}
+
+function gameElementIsInsideLoadingLayer(el,doc){
+    let parent=el;
+    for(let depth=0;parent && depth<7;depth++,parent=parent.parentElement){
+        const label=((parent.id||"")+" "+(typeof parent.className==="string"?parent.className:"")).toLowerCase();
+        if(/loading|preload|splash|boot-screen|startup-screen/.test(label) &&
+           gameElementIsVisible(parent,doc,30,20))return true;
+    }
     return false;
 }
 
@@ -1916,52 +1958,55 @@ function gameFrameLooksReady(iframe){
     try{
         const doc=iframe.contentDocument;
         if(!doc || doc.readyState!=="complete" || !doc.body)return false;
-        const bodyText=(doc.body.innerText||doc.body.textContent||"").trim();
-        if(/404 page not found|there isn't a github pages site here|page not found/i.test((doc.title||"")+" "+bodyText.slice(0,220)))return false;
+        const bodyText=(doc.body.innerText||"").trim();
+        const titleAndText=((doc.title||"")+" "+bodyText.slice(0,500)).toLowerCase();
+        if(/404 page not found|there isn't a github pages site here|page not found|site not found/i.test(titleAndText))return false;
+        if(gameHasVisibleLoadingLayer(doc))return false;
+        if(/^(loading(?:\.\.\.)?|please wait|initializing(?:\.\.\.)?|connecting(?:\.\.\.)?|preparing game|جاري التحميل|جارٍ التحميل|يرجى الانتظار|جاري تجهيز اللعبة|يتم التحميل)[.!…\s]*$/i.test(bodyText.slice(0,220)))return false;
 
         for(const canvas of doc.querySelectorAll("canvas")){
             const rect=canvas.getBoundingClientRect();
-            if(rect.width>=80 && rect.height>=60 && canvasHasVisiblePixels(canvas))return true;
-        }
-
-        for(const img of doc.images||[]){
-            if(img.complete && img.naturalWidth>0){
-                const rect=img.getBoundingClientRect();
-                if(rect.width>=35 && rect.height>=25)return true;
-            }
+            if(rect.width>=120 && rect.height>=80 && canvasHasVisiblePixels(canvas))return true;
         }
 
         for(const video of doc.querySelectorAll("video")){
             const rect=video.getBoundingClientRect();
-            if(video.readyState>=2 && rect.width>=80 && rect.height>=50)return true;
+            if(video.readyState>=2 && rect.width>=120 && rect.height>=70)return true;
         }
 
-        // ألعاب DOM: نتحقق من نص ظاهر أو عنصر تحكم فعلي مرئي.
-        const visibleTextElements=doc.querySelectorAll("button,a,input,[role='button'],h1,h2,h3,p,span");
-        for(const el of visibleTextElements){
-            const rect=el.getBoundingClientRect();
-            const style=doc.defaultView?.getComputedStyle(el);
-            const text=(el.innerText||el.value||el.textContent||"").trim();
-            if(text.length>=3 && rect.width>=12 && rect.height>=10 && style && style.display!=="none" && style.visibility!=="hidden" && Number(style.opacity||1)>0)return true;
+        // شاشة البداية الخاصة باللعبة مقبولة لو أصبحت تفاعلية وليست مجرد splash أو loader.
+        const controls=doc.querySelectorAll("button,input,select,textarea,[role='button']");
+        for(const el of controls){
+            if(!gameElementIsVisible(el,doc,28,18) || gameElementIsInsideLoadingLayer(el,doc))continue;
+            const label=(el.innerText||el.value||el.getAttribute("aria-label")||"").trim();
+            if(label && !/loading|please wait|تحميل|انتظر|جاري/i.test(label))return true;
+        }
+
+        for(const img of doc.images||[]){
+            if(!img.complete || img.naturalWidth<100 || gameElementIsInsideLoadingLayer(img,doc))continue;
+            if(gameElementIsVisible(img,doc,80,60)){
+                const parentText=(img.parentElement?.innerText||"").trim();
+                if(!/loading|please wait|تحميل|انتظر|جاري/i.test(parentText))return true;
+            }
         }
 
         for(const svg of doc.querySelectorAll("svg")){
             const rect=svg.getBoundingClientRect();
-            if(rect.width>=40 && rect.height>=40 && svg.children.length>0)return true;
+            if(rect.width>=50 && rect.height>=50 && svg.children.length>0 &&
+               !gameElementIsInsideLoadingLayer(svg,doc))return true;
         }
 
-        // بعض ألعاب DOM لا تحتوي على نصوص؛ نبحث عن لوحة لعبة ظاهرة وغير سوداء.
-        for(const el of doc.querySelectorAll("main,section,[id*='game' i],[class*='game' i]")){
-            const rect=el.getBoundingClientRect();
-            const style=doc.defaultView?.getComputedStyle(el);
-            if(rect.width<180 || rect.height<100 || !style || style.display==="none" || style.visibility==="hidden" || Number(style.opacity||1)===0)continue;
-            const bg=style.backgroundColor||"";
-            if(bg && bg!=="transparent" && bg!=="rgba(0, 0, 0, 0)" && !/rgba?\(\s*0\s*,\s*0\s*,\s*0\s*(,\s*1)?\s*\)/i.test(bg))return true;
+        // بعض الألعاب تعتمد على واجهة DOM؛ نسمح بالنص الظاهر فقط إذا لم تكن الصفحة كلها رسالة تحميل.
+        const visibleTextElements=doc.querySelectorAll("h1,h2,h3,p,span,[role='status']");
+        for(const el of visibleTextElements){
+            if(!gameElementIsVisible(el,doc,18,12) || gameElementIsInsideLoadingLayer(el,doc))continue;
+            const value=(el.innerText||el.textContent||"").trim();
+            if(value.length>=4 && !/^(loading|please wait|initializing|connecting|preparing|تحميل|انتظر|جاري التحميل|جاري التجهيز)[.!…\s]*$/i.test(value))return true;
         }
 
         return false;
     }catch(e){
-        // المحتوى محلي في نفس النطاق عادةً؛ إذا تعذرت قراءته لا نخفي شاشة التحميل بالتخمين.
+        // إذا لم نقدر نتحقق من محتوى اللعبة، لا نخفي اللوجو بالتخمين.
         return false;
     }
 }
@@ -2025,9 +2070,10 @@ function startGameFrameLoad(iframe,game,token,options={}){
                 return;
             }
             elapsed+=500;
-            if(elapsed>=1500 && isExpectedDocument() && gameFrameLooksReady(iframe)){
+            // ننتظر أن يكون المحتوى جاهزًا بشكل ثابت، لا مجرد ظهور شاشة بداية ثم سواد.
+            if(elapsed>=3500 && isExpectedDocument() && gameFrameLooksReady(iframe)){
                 positiveChecks++;
-                if(positiveChecks>=2)finishGameFrameLoading(token,options);
+                if(positiveChecks>=5)finishGameFrameLoading(token,options);
             }else{
                 positiveChecks=0;
             }
@@ -2063,12 +2109,25 @@ function continueGameAfterLoading(){
 
 function restartCurrentGame(){
     const name=activeGameName;
-    if(!name){
+    const game=catalog.find(g=>g.name===name);
+    const iframe=document.getElementById("game-container");
+    if(!name || !game || !iframe){
         setGameSaveStatus("افتح لعبة أولًا لإعادة تشغيلها.","error");
         return;
     }
-    // نتجنب انتظار حفظ قد يعلق أثناء تعطل اللعبة؛ إعادة التشغيل لازم تكون فورية.
-    openGame(encodeURIComponent(name),true,true);
+
+    // إعادة التحميل فورية ولا تنتظر Firestore، وتحافظ على بيانات اللعبة المحلية الحالية.
+    clearGameLoadingWatchers();
+    stopGameAutosave();
+    const token=++gameOpenSequence;
+    showGameChrome();
+    resetGameLoadingRecovery();
+    showGameLoading();
+    setGameSaveStatus("جاري إعادة تشغيل اللعبة...");
+    startGameFrameLoad(iframe,game,token,{
+        errorMessage:"تعذر إعادة تشغيل اللعبة. جرّب مرة أخرى أو ارجع لقائمة الألعاب.",
+        slowMessage:"اللعبة ما زالت لا تظهر بعد إعادة التشغيل. قد تكون ملفاتها بطيئة أو فيها مشكلة؛ جرّب مرة أخرى أو ارجع للقائمة."
+    });
 }
 
 function buildCustomGameDocument(game){
