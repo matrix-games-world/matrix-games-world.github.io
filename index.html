@@ -2226,8 +2226,10 @@ function startGameFrameLoad(iframe,game,token,options={}){
     let failed=false;
 
     const normalizedPath=path=>{
-        try{return decodeURIComponent(path).replace(/\\/+$/,"");}
-        catch(e){return String(path||"").replace(/\\/+$/,"");}
+        let value=String(path||"");
+        try{value=decodeURIComponent(value);}catch(e){}
+        while(value.length>1 && value.endsWith("/"))value=value.slice(0,-1);
+        return value;
     };
 
     const isExpectedDocument=()=>{
