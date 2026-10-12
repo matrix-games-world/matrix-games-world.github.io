@@ -2212,7 +2212,7 @@ function startGameFrameLoad(iframe,game,token,options={}){
     resetGameLoadingRecovery();
     showGameLoading();
 
-    // مهم: امسح المصدر القديم قبل وضع المعالجات. حدث تحميل about:blank لا يُعتبر تحميلًا للعبة.
+    // امسح أي تحميل قديم قبل بدء اللعبة الجديدة.
     iframe.onload=null;
     iframe.onerror=null;
     iframe.removeAttribute("srcdoc");
@@ -2222,65 +2222,77 @@ function startGameFrameLoad(iframe,game,token,options={}){
     const isCustom=!!game.htmlCode;
     const expectedUrl=isCustom?null:new URL(gameUrl(game.name),location.href);
     iframe.dataset.matrixGameToken=String(token);
-    let checkStarted=false;
+    let expectedDocumentSince=0;
+    let failed=false;
+
+    const normalizedPath=path=>{
+        try{return decodeURIComponent(path).replace(/\\+/g,"/").replace(/\\/$/,"");}
+        catch(e){return String(path||"").replace(/\\/$/,"");}
+    };
 
     const isExpectedDocument=()=>{
         if(token!==gameOpenSequence || iframe.dataset.matrixGameToken!==String(token))return false;
         try{
             const doc=iframe.contentDocument;
-            if(!doc || doc.readyState==="loading")return false;
+            if(!doc || doc.readyState==="loading" || !doc.documentElement)return false;
             if(isCustom)return iframe.hasAttribute("srcdoc");
             const actual=new URL(iframe.contentWindow.location.href);
-            return actual.origin===expectedUrl.origin && actual.pathname===expectedUrl.pathname;
+            return actual.origin===expectedUrl.origin &&
+                normalizedPath(actual.pathname)===normalizedPath(expectedUrl.pathname);
         }catch(e){return false;}
     };
 
-    const beginReadinessPolling=()=>{
-        if(checkStarted)return;
-        checkStarted=true;
-        let elapsed=0;
-        let positiveChecks=0;
-        activeGameReadyTimer=setInterval(()=>{
-            if(token!==gameOpenSequence || iframe.dataset.matrixGameToken!==String(token)){
-                clearGameLoadingWatchers();
-                return;
-            }
-            elapsed+=300;
-            // تأكيد قصير أن اللعبة بدأت فعلًا، دون إبقاء شاشة اللوجو عدة ثوانٍ إضافية.
-            if(elapsed>=300 && isExpectedDocument() && gameFrameLooksReady(iframe)){
-                positiveChecks++;
-                if(positiveChecks>=1)finishGameFrameLoading(token,options);
-            }else{
-                positiveChecks=0;
-            }
-        },300);
+    const finishOnceDocumentHasStarted=()=>{
+        if(token!==gameOpenSequence || failed || !isExpectedDocument())return;
+        if(!expectedDocumentSince)expectedDocumentSince=Date.now();
+
+        // لا ننتظر أن تكشف كل لعبة عن canvas أو زر معروف؛ ألعاب HTML مختلفة
+        // ولكل واحدة واجهة تحميل مختلفة، وهذا الفحص الصارم كان يترك اللوجو عالقًا.
+        if(Date.now()-expectedDocumentSince>=450){
+            finishGameFrameLoading(token,options);
+        }
     };
 
     iframe.onload=()=>{
-        if(!isExpectedDocument())return;
-        beginReadinessPolling();
-    };
-    iframe.onerror=()=>{
-        if(token!==gameOpenSequence)return;
-        showGameLoadingRecovery(options.errorMessage||"تعذر تحميل اللعبة. تقدر تضغط إعادة تشغيل اللعبة أو تعرضها يدويًا.");
+        // عند اكتمال تحميل المستند الصحيح، سيُنهي فحص الجاهزية التحميل بعد مهلة قصيرة.
+        if(isExpectedDocument() && !expectedDocumentSince)expectedDocumentSince=Date.now();
     };
 
-    // لو استغرق فتح اللعبة أكثر من 18 ثانية، نظهر أدوات التعافي دون إخفاء اللوجو.
+    iframe.onerror=()=>{
+        if(token!==gameOpenSequence)return;
+        failed=true;
+        showGameLoadingRecovery(options.errorMessage||"تعذر تحميل اللعبة. اضغط إعادة تشغيل اللعبة أو ارجع لقائمة الألعاب.");
+        hideGameLoading();
+        setGameSaveStatus(options.errorMessage||"تعذر تحميل اللعبة. جرّب إعادة التشغيل.", "error");
+    };
+
+    // فحص بسيط للمستند بدل الاعتماد على اكتشاف عناصر رسومية داخل كل لعبة.
+    activeGameReadyTimer=setInterval(()=>{
+        if(token!==gameOpenSequence || iframe.dataset.matrixGameToken!==String(token)){
+            clearGameLoadingWatchers();
+            return;
+        }
+        if(isExpectedDocument()){
+            finishOnceDocumentHasStarted();
+        }else{
+            expectedDocumentSince=0;
+        }
+    },150);
+
+    // لو لم يفتح المستند أصلًا، لا نترك شعار الموقع يدور إلى الأبد.
     activeGameLoadingTimer=setTimeout(()=>{
         if(token!==gameOpenSequence)return;
-        showGameLoadingRecovery(options.slowMessage||"اللعبة لسه ما ظهرتش. هنسيب شاشة التحميل ظاهرة؛ جرّب إعادة التشغيل أو عرض اللعبة يدويًا.");
-    },18000);
+        showGameLoadingRecovery(options.slowMessage||"اللعبة اتأخرت في الفتح. جرّب إعادة تشغيل اللعبة أو عرضها يدويًا.");
+        hideGameLoading();
+        setGameSaveStatus(options.slowMessage||"اللعبة اتأخرت في الفتح. استخدم إعادة التشغيل أو العرض اليدوي.", "error");
+    },12000);
 
     if(isCustom){
         iframe.srcdoc=buildCustomGameDocument(game);
     }else{
         iframe.src=expectedUrl.href;
     }
-
-    // ابدأ فحص الجاهزية أثناء تحميل الموارد؛ لا تنتظر اكتمال كل الصور والإعلانات داخل اللعبة.
-    beginReadinessPolling();
 }
-
 function continueGameAfterLoading(){
     const token=gameOpenSequence;
     finishGameFrameLoading(token,{readyMessage:"تم عرض اللعبة يدويًا. لو فضلت سوداء اضغط إعادة تشغيل اللعبة."});
