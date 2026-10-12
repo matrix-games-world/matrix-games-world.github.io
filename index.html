@@ -906,6 +906,7 @@ iframe{width:100%;height:100%;border:none}
                     <button id="game-save-btn" class="player-action save-btn" onclick="saveCurrentGameProgress(true)">💾 حفظ التقدم</button>
                     <button id="game-sync-btn" class="player-action sync-btn" onclick="restoreGameProgressFromAccount()">🔄 مزامنة التقدم</button>
                     <button id="game-restart-btn" class="player-action restart-btn" onclick="restartCurrentGame()">⟳ إعادة تشغيل اللعبة</button>
+                    <button id="game-continue-btn" class="player-action continue-btn" style="display:none" onclick="continueGameAfterLoading()">▶ عرض اللعبة</button>
                 </div>
             </div>
 
@@ -917,15 +918,7 @@ iframe{width:100%;height:100%;border:none}
                             <div class="loading-spinner" aria-hidden="true"></div>
                             <img id="loading-logo" class="loading-logo" src="assets/matrix-logo-192.jpg" alt="Matrix Games: The World">
                         </div>
-                        <div class="loading-title"><span id="loading-title-text">جاري تحميل اللعبة</span><span class="loading-dots"></span></div>
-                        <div id="loading-sub-text" class="loading-sub">جاري تجهيز اللعبة، هنخلي الشاشة ظاهرة لحد ما تظهر اللعبة.</div>
-                        <div id="game-loading-recovery" class="game-loading-recovery" style="display:none">
-                            <div id="game-loading-recovery-message" role="alert">اللعبة بتتأخر في الفتح.</div>
-                            <div class="game-loading-recovery-actions">
-                                <button type="button" class="player-action restart-btn" onclick="restartCurrentGame()">⟳ إعادة تشغيل اللعبة</button>
-                                <button type="button" class="player-action continue-btn" onclick="continueGameAfterLoading()">عرض اللعبة على أي حال</button>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 <iframe id="game-container" src="" allowfullscreen></iframe>
@@ -1860,17 +1853,17 @@ function hideGameLoading(){
 }
 
 function resetGameLoadingRecovery(){
-    const panel=document.getElementById("game-loading-recovery");
-    const message=document.getElementById("game-loading-recovery-message");
-    if(panel)panel.style.display="none";
-    if(message)message.textContent="اللعبة بتتأخر في الفتح.";
+    const continueBtn=document.getElementById("game-continue-btn");
+    if(continueBtn)continueBtn.style.display="none";
 }
 
 function showGameLoadingRecovery(message){
-    const panel=document.getElementById("game-loading-recovery");
-    const label=document.getElementById("game-loading-recovery-message");
-    if(label)label.textContent=message||"اللعبة بتتأخر في الفتح. تقدر تعيد تشغيلها أو تعرضها يدويًا.";
-    if(panel)panel.style.display="flex";
+    // أدوات التعافي تظهر في شريط الأزرار العلوي، وليس فوق اللوجو في منتصف اللعبة.
+    const continueBtn=document.getElementById("game-continue-btn");
+    if(continueBtn){
+        continueBtn.style.display="inline-flex";
+        continueBtn.title=message||"اللعبة اتأخرت. اضغط لعرض اللعبة يدويًا.";
+    }
 }
 
 function clearGameLoadingWatchers(){
@@ -2074,15 +2067,15 @@ function startGameFrameLoad(iframe,game,token,options={}){
                 clearGameLoadingWatchers();
                 return;
             }
-            elapsed+=500;
-            // ننتظر أن يكون المحتوى جاهزًا بشكل ثابت، لا مجرد ظهور شاشة بداية ثم سواد.
-            if(elapsed>=3500 && isExpectedDocument() && gameFrameLooksReady(iframe)){
+            elapsed+=300;
+            // تأكيد قصير أن اللعبة بدأت فعلًا، دون إبقاء شاشة اللوجو عدة ثوانٍ إضافية.
+            if(elapsed>=600 && isExpectedDocument() && gameFrameLooksReady(iframe)){
                 positiveChecks++;
-                if(positiveChecks>=5)finishGameFrameLoading(token,options);
+                if(positiveChecks>=2)finishGameFrameLoading(token,options);
             }else{
                 positiveChecks=0;
             }
-        },500);
+        },300);
     };
 
     iframe.onload=()=>{
@@ -2545,7 +2538,7 @@ async function openGame(encodedName, routeOnly=false, skipPreviousSave=false){
 
     // احفظ اللعبة الحالية أولًا قبل إعادة ضبط مساحة التخزين.
     if(activeGameName){
-        if(!skipPreviousSave)await saveCurrentGameProgress(false);
+        if(!skipPreviousSave)void saveCurrentGameProgress(false);
         stopGameAutosave();
         restoreStorageBaseline();
     }else{
