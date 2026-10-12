@@ -2476,8 +2476,8 @@ async function openGame(encodedName, routeOnly=false, skipPreviousSave=false){
         return;
     }
 
+    clearGameLoadingWatchers();
     const openToken=++gameOpenSequence;
-    if(activeGameLoadingTimer){clearTimeout(activeGameLoadingTimer);activeGameLoadingTimer=null;}
 
     // احفظ اللعبة الحالية أولًا قبل إعادة ضبط مساحة التخزين.
     if(activeGameName){
