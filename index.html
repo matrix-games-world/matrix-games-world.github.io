@@ -1921,25 +1921,30 @@ function canvasHasVisiblePixels(canvas){
 
 function gameElementIsVisible(el,doc,minWidth=12,minHeight=10){
     const rect=el.getBoundingClientRect();
-    const style=doc.defaultView?.getComputedStyle(el);
-    return !!style && rect.width>=minWidth && rect.height>=minHeight &&
-        style.display!=="none" && style.visibility!=="hidden" &&
-        Number(style.opacity||1)>0;
+    if(rect.width<minWidth || rect.height<minHeight)return false;
+
+    // افحص الآباء أيضًا؛ بعض الألعاب تخفي طبقة التحميل بالشفافية فقط.
+    for(let node=el;node && node!==doc;node=node.parentElement){
+        const style=doc.defaultView?.getComputedStyle(node);
+        if(!style || style.display==="none" || style.visibility==="hidden" || Number(style.opacity||1)<=0)return false;
+    }
+    return true;
 }
 
 function gameHasVisibleLoadingLayer(doc){
     const selectors=[
         '[aria-busy="true"]',
         '[id*="loading" i]','[class*="loading" i]',
+        '[id*="loader" i]','[class*="loader" i]',
         '[id*="preload" i]','[class*="preload" i]',
-        '[id*="splash" i]','[class*="splash" i]'
+        '[id*="splash" i]','[class*="splash" i]',
+        '[id*="startup" i]','[class*="startup" i]'
     ];
     for(const el of doc.querySelectorAll(selectors.join(","))){
         if(!gameElementIsVisible(el,doc,80,35))continue;
         const rect=el.getBoundingClientRect();
-        // تجاهل أي label صغير أو اسم عنصر عابر؛ نبحث عن طبقة انتظار تغطي جزءًا واضحًا من اللعبة.
-        if(rect.width>=Math.min(180,doc.documentElement.clientWidth*.35) &&
-           rect.height>=Math.min(70,doc.documentElement.clientHeight*.12))return true;
+        // حتى شاشة انتظار صغيرة داخل اللعبة تمنع إخفاء شعار الموقع.
+        if(rect.width>=80 && rect.height>=35 && rect.width*rect.height>=2200)return true;
     }
     return false;
 }
