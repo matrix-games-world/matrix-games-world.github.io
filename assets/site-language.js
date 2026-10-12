@@ -75,6 +75,9 @@ function apply(next){
  txt("#hero-title","Matrix Games: The World");txt("#hero-subtitle",c.hero);txt("#all-games-title",c.games);
  const back=document.querySelector("#game-screen .game-back-btn");if(back)back.textContent=c.back;
  const sv=document.getElementById("game-save-btn");if(sv)sv.textContent=c.save;
+ const restart=document.getElementById("game-restart-btn");if(restart)restart.textContent=l==="en"?"↻ Restart Game":"⟳ إعادة تشغيل اللعبة";
+ const loadingRestart=document.querySelector("#game-loading-recovery .restart-btn");if(loadingRestart)loadingRestart.textContent=l==="en"?"↻ Restart Game":"⟳ إعادة تشغيل اللعبة";
+ const loadingContinue=document.querySelector("#game-loading-recovery .continue-btn");if(loadingContinue)loadingContinue.textContent=l==="en"?"Show Game Anyway":"عرض اللعبة على أي حال";
  const rs=document.getElementById("game-restore-btn");if(rs)rs.textContent=c.restore;
  const pl=document.getElementById("game-player-label");if(pl)pl.textContent=c.gameNow;
  const rt=document.getElementById("related-games-title");if(rt)rt.textContent=c.related;
