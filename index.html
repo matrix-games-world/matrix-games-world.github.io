@@ -1764,7 +1764,8 @@ async function verifyNetworkConnectivity(){
     return matrixNetworkCheckPromise;
 }
 
-async function ensureNetworkBeforeGame(){
+function ensureNetworkBeforeGame(){
+    // لا نوقف فتح اللعبة من أجل اختبار اتصال قد يستغرق عدة ثوانٍ.
     if(typeof navigator!=="undefined" && !navigator.onLine){
         matrixNetworkCheckComplete=true;
         matrixNetworkCheckedAt=Date.now();
@@ -1773,15 +1774,12 @@ async function ensureNetworkBeforeGame(){
         return false;
     }
 
+    // فحص الاتصال يجري في الخلفية؛ تحميل ملف اللعبة نفسه هو الاختبار الأهم.
     const stale=Date.now()-matrixNetworkCheckedAt>20000;
     if(!matrixNetworkCheckComplete || stale || !matrixNetworkIsOnline){
-        const connected=await verifyNetworkConnectivity();
-        if(!connected){
-            showNetworkNotice("الإنترنت غير متاح حاليًا. اللعبة مش هتفتح لحد ما الاتصال يرجع.");
-            return false;
-        }
+        void verifyNetworkConnectivity();
     }
-    return matrixNetworkIsOnline;
+    return true;
 }
 
 function initializeNetworkStatus(){
@@ -2135,7 +2133,7 @@ function gameElementIsInsideLoadingLayer(el,doc){
 function gameFrameLooksReady(iframe){
     try{
         const doc=iframe.contentDocument;
-        if(!doc || doc.readyState!=="complete" || !doc.body)return false;
+        if(!doc || (doc.readyState!=="interactive" && doc.readyState!=="complete") || !doc.body)return false;
         const bodyText=(doc.body.innerText||"").trim();
         const titleAndText=((doc.title||"")+" "+bodyText.slice(0,500)).toLowerCase();
         if(/404 page not found|there isn't a github pages site here|page not found|site not found/i.test(titleAndText))return false;
@@ -2278,6 +2276,9 @@ function startGameFrameLoad(iframe,game,token,options={}){
     }else{
         iframe.src=expectedUrl.href;
     }
+
+    // ابدأ فحص الجاهزية أثناء تحميل الموارد؛ لا تنتظر اكتمال كل الصور والإعلانات داخل اللعبة.
+    beginReadinessPolling();
 }
 
 function continueGameAfterLoading(){
@@ -2703,7 +2704,7 @@ function toggleCurrentGameFavorite(){
 }
 
 async function openGame(encodedName, routeOnly=false, skipPreviousSave=false){
-    if(!(await ensureNetworkBeforeGame()))return;
+    if(!ensureNetworkBeforeGame())return;
     const name=decodeURIComponent(encodedName);
     const game=catalog.find(g=>g.name===name);
     const iframe=document.getElementById("game-container");
