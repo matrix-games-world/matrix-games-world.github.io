@@ -1898,7 +1898,7 @@ async function loadAllGameImagesOnce(){
     const updatedRows=new Map();
 
     function applyImageRecord(docId,data){
-        if(!data || typeof data.image!=="string" || !data.image.startsWith("data:image/"))return false;
+        if(!data || typeof data.image!=="string" || !data.image.trim())return false;
 
         // Prefer the saved game name; some older records may use a different document ID.
         const recordName=String(data.name||docId||"");
