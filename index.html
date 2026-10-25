@@ -1894,34 +1894,66 @@ async function loadAllGameImagesOnce(){
     if(!db)return;
     if(allGameImagesPromise)return allGameImagesPromise;
 
-    allGameImagesPromise=db.collection("games")
-        .where("source","==","local")
-        .get()
-        .then(async snap=>{
-            const rows=[];
+    // لا نسحب مئات الصور الكبيرة في استعلام واحد؛ نقرأ 10 ألعاب في كل دفعة.
+    // كل دفعة مستقلة حتى لا يمنع خطأ مؤقت في دفعة بقية الصور من الظهور.
+    const names=[...new Set(gameFiles)];
+    const batchSize=10;
+    let nextIndex=0;
 
+    const loadBatch=async(batchNames)=>{
+        try{
+            const snap=await db.collection("games")
+                .where(firebase.firestore.FieldPath.documentId(),"in",batchNames)
+                .get();
+
+            const rows=[];
             snap.forEach(doc=>{
                 const data=doc.data()||{};
-                if(!data.name || !data.image)return;
+                const name=data.name||doc.id;
+                if(!data.image)return;
 
-                const idx=catalog.findIndex(g=>g.name===data.name);
+                const idx=catalog.findIndex(g=>g.name===name || g.name===doc.id);
                 if(idx>=0){
-                    catalog[idx]={...catalog[idx],...data,id:doc.id};
-                    rows.push({name:data.name,image:data.image});
+                    catalog[idx]={...catalog[idx],...data,id:doc.id,image:data.image};
+                    rows.push({name:catalog[idx].name,image:data.image});
                 }
+
+                // حدث البطاقة في الصفحة فور وصول صورتها، دون إعادة رسم كل الألعاب.
+                const keys=[name,doc.id];
+                keys.forEach(key=>{
+                    document.querySelectorAll('[data-game-preview="'+encodeURIComponent(key)+'"]').forEach(img=>{
+                        img.src=data.image;
+                        img.dataset.loaded="1";
+                        img.removeAttribute("data-game-pending");
+                    });
+                });
             });
 
-            // حدّث العناصر الموجودة بدون إعادة بناء شبكة الألعاب كلها.
-            applyAllLoadedGameImages();
-            await writeCachedGameImages(rows);
-        })
-        .catch(e=>{
-            console.warn("All game images:",e);
-        });
+            if(rows.length)await writeCachedGameImages(rows);
+        }catch(e){
+            console.warn("Game image batch failed; continuing with next batch:",batchNames,e);
+        }
+    };
+
+    allGameImagesPromise=(async()=>{
+        const worker=async()=>{
+            while(nextIndex<names.length){
+                const index=nextIndex;
+                nextIndex+=batchSize;
+                const batchNames=names.slice(index,index+batchSize);
+                if(batchNames.length)await loadBatch(batchNames);
+            }
+        };
+
+        // عاملان فقط للحفاظ على استهلاك الشبكة معتدلاً مع تحميل جميع الصور.
+        await Promise.all([worker(),worker()]);
+        applyAllLoadedGameImages();
+    })().catch(e=>{
+        console.warn("All game images:",e);
+    });
 
     return allGameImagesPromise;
 }
-
 
 function setupLazyGameImages(){
     // تم إلغاء التحميل صورة-بصورة عمدًا.
