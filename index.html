@@ -1895,64 +1895,93 @@ async function loadAllGameImagesOnce(){
     if(allGameImagesPromise)return allGameImagesPromise;
 
     const names=[...new Set(gameFiles)];
-    let loadedCount=0;
-    let nextIndex=0;
-    const concurrency=6;
+    const updatedRows=new Map();
 
-    async function loadOneGameImage(name){
-        try{
-            // Use the exact document ID just like the admin uploader does.
-            // This avoids failures from Firestore "in" queries on document IDs.
-            const snap=await db.collection("games").doc(name).get();
-            if(!snap.exists)return;
+    function applyImageRecord(docId,data){
+        if(!data || typeof data.image!=="string" || !data.image.startsWith("data:image/"))return false;
 
-            const data=snap.data()||{};
-            if(!data.image)return;
+        // Prefer the saved game name; some older records may use a different document ID.
+        const recordName=String(data.name||docId||"");
+        const idx=catalog.findIndex(g=>g.name===recordName || g.name===docId);
+        if(idx<0)return false;
 
-            const idx=catalog.findIndex(g=>g.name===name || g.name===snap.id);
-            if(idx<0)return;
+        const canonicalName=catalog[idx].name;
+        catalog[idx]={...catalog[idx],...data,id:docId,name:canonicalName,image:data.image};
 
-            const canonicalName=catalog[idx].name;
-            catalog[idx]={...catalog[idx],...data,id:snap.id,name:canonicalName,image:data.image};
-            loadedCount++;
-
-            // Update every rendered copy of this game's card immediately.
-            [name,snap.id].forEach(key=>{
-                document.querySelectorAll('[data-game-preview="'+encodeURIComponent(key)+'"]').forEach(img=>{
-                    img.src=data.image;
-                    img.dataset.loaded="1";
-                    img.removeAttribute("data-game-pending");
-                });
+        const keys=[canonicalName,docId,recordName].filter(Boolean);
+        keys.forEach(key=>{
+            document.querySelectorAll('[data-game-preview="'+encodeURIComponent(key)+'"]').forEach(img=>{
+                img.src=data.image;
+                img.dataset.loaded="1";
+                img.removeAttribute("data-game-pending");
             });
+        });
 
-            // Cache the image locally so next visit can show it without waiting for Firestore.
-            try{
-                await writeCachedGameImages([{name:canonicalName,image:data.image}]);
-            }catch(cacheErr){
-                console.warn("Could not cache game image:",name,cacheErr);
-            }
-        }catch(e){
-            // One bad/missing image must never stop the other games from loading.
-            console.warn("Game image failed:",name,e);
-        }
+        updatedRows.set(canonicalName,{name:canonicalName,image:data.image});
+        return true;
     }
 
     allGameImagesPromise=(async()=>{
+        let usedCollectionQuery=false;
+
+        // First locate all administrator-uploaded game images by their source field
+        // and resolve them by saved name as well as by document ID.
+        try{
+            const snap=await db.collection("games").where("source","==","local").get();
+            snap.forEach(doc=>applyImageRecord(doc.id,doc.data()||{}));
+            usedCollectionQuery=true;
+        }catch(e){
+            console.warn("Image catalog query failed; using exact document IDs:",e);
+        }
+
+        // Reuse cached pictures already applied to catalog; only check names still missing an image.
+        const missingNames=names.filter(name=>{
+            const game=catalog.find(g=>g.name===name);
+            return !game?.image;
+        });
+
+        let nextIndex=0;
+        const concurrency=12;
+
+        async function loadOneGameImage(name){
+            try{
+                const snap=await db.collection("games").doc(name).get();
+                if(!snap.exists)return;
+                applyImageRecord(snap.id,snap.data()||{});
+            }catch(e){
+                console.warn("Game image failed:",name,e);
+            }
+        }
+
         const worker=async()=>{
             while(true){
                 const index=nextIndex++;
-                if(index>=names.length)return;
-                await loadOneGameImage(names[index]);
+                if(index>=missingNames.length)return;
+                await loadOneGameImage(missingNames[index]);
             }
         };
 
         await Promise.all(Array.from({length:concurrency},()=>worker()));
+
+        const rows=[...updatedRows.values()];
+        if(rows.length){
+            try{await writeCachedGameImages(rows);}
+            catch(e){console.warn("Could not cache game images:",e);}
+        }
+
         applyAllLoadedGameImages();
 
+        const loadedOriginalCount=names.filter(name=>Boolean(catalog.find(g=>g.name===name)?.image)).length;
         const counter=document.getElementById("game-counter");
         if(counter){
-            const total=names.length;
-            counter.textContent += " | صور الألعاب المحفوظة: "+loadedCount+"/"+total;
+            const visibleCount=catalog.filter(g=>g.enabled!==false).length;
+            counter.textContent="عدد الألعاب المعروضة: "+visibleCount+
+                " | إجمالي الكتالوج: "+catalog.length+
+                " | الصور الأصلية المتوفرة: "+loadedOriginalCount+"/"+names.length;
+        }
+
+        if(loadedOriginalCount<names.length){
+            console.info("Matrix Games: "+loadedOriginalCount+" original game images available for "+names.length+" local games.");
         }
     })().catch(e=>{
         console.warn("All game images:",e);
