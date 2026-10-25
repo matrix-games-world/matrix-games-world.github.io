@@ -1894,60 +1894,66 @@ async function loadAllGameImagesOnce(){
     if(!db)return;
     if(allGameImagesPromise)return allGameImagesPromise;
 
-    // لا نسحب مئات الصور الكبيرة في استعلام واحد؛ نقرأ 10 ألعاب في كل دفعة.
-    // كل دفعة مستقلة حتى لا يمنع خطأ مؤقت في دفعة بقية الصور من الظهور.
     const names=[...new Set(gameFiles)];
-    const batchSize=10;
+    let loadedCount=0;
     let nextIndex=0;
+    const concurrency=6;
 
-    const loadBatch=async(batchNames)=>{
+    async function loadOneGameImage(name){
         try{
-            const snap=await db.collection("games")
-                .where(firebase.firestore.FieldPath.documentId(),"in",batchNames)
-                .get();
+            // Use the exact document ID just like the admin uploader does.
+            // This avoids failures from Firestore "in" queries on document IDs.
+            const snap=await db.collection("games").doc(name).get();
+            if(!snap.exists)return;
 
-            const rows=[];
-            snap.forEach(doc=>{
-                const data=doc.data()||{};
-                const name=data.name||doc.id;
-                if(!data.image)return;
+            const data=snap.data()||{};
+            if(!data.image)return;
 
-                const idx=catalog.findIndex(g=>g.name===name || g.name===doc.id);
-                if(idx>=0){
-                    catalog[idx]={...catalog[idx],...data,id:doc.id,image:data.image};
-                    rows.push({name:catalog[idx].name,image:data.image});
-                }
+            const idx=catalog.findIndex(g=>g.name===name || g.name===snap.id);
+            if(idx<0)return;
 
-                // حدث البطاقة في الصفحة فور وصول صورتها، دون إعادة رسم كل الألعاب.
-                const keys=[name,doc.id];
-                keys.forEach(key=>{
-                    document.querySelectorAll('[data-game-preview="'+encodeURIComponent(key)+'"]').forEach(img=>{
-                        img.src=data.image;
-                        img.dataset.loaded="1";
-                        img.removeAttribute("data-game-pending");
-                    });
+            const canonicalName=catalog[idx].name;
+            catalog[idx]={...catalog[idx],...data,id:snap.id,name:canonicalName,image:data.image};
+            loadedCount++;
+
+            // Update every rendered copy of this game's card immediately.
+            [name,snap.id].forEach(key=>{
+                document.querySelectorAll('[data-game-preview="'+encodeURIComponent(key)+'"]').forEach(img=>{
+                    img.src=data.image;
+                    img.dataset.loaded="1";
+                    img.removeAttribute("data-game-pending");
                 });
             });
 
-            if(rows.length)await writeCachedGameImages(rows);
+            // Cache the image locally so next visit can show it without waiting for Firestore.
+            try{
+                await writeCachedGameImages([{name:canonicalName,image:data.image}]);
+            }catch(cacheErr){
+                console.warn("Could not cache game image:",name,cacheErr);
+            }
         }catch(e){
-            console.warn("Game image batch failed; continuing with next batch:",batchNames,e);
+            // One bad/missing image must never stop the other games from loading.
+            console.warn("Game image failed:",name,e);
         }
-    };
+    }
 
     allGameImagesPromise=(async()=>{
         const worker=async()=>{
-            while(nextIndex<names.length){
-                const index=nextIndex;
-                nextIndex+=batchSize;
-                const batchNames=names.slice(index,index+batchSize);
-                if(batchNames.length)await loadBatch(batchNames);
+            while(true){
+                const index=nextIndex++;
+                if(index>=names.length)return;
+                await loadOneGameImage(names[index]);
             }
         };
 
-        // عاملان فقط للحفاظ على استهلاك الشبكة معتدلاً مع تحميل جميع الصور.
-        await Promise.all([worker(),worker()]);
+        await Promise.all(Array.from({length:concurrency},()=>worker()));
         applyAllLoadedGameImages();
+
+        const counter=document.getElementById("game-counter");
+        if(counter){
+            const total=names.length;
+            counter.textContent += " | صور الألعاب المحفوظة: "+loadedCount+"/"+total;
+        }
     })().catch(e=>{
         console.warn("All game images:",e);
     });
