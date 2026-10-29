@@ -624,6 +624,88 @@ iframe{width:100%;height:100%;border:none}
 @media(prefers-reduced-motion:reduce){#shield-store-ad *{transition:none!important}}
 </style>
 
+<style id="shield-bags-ad-size-and-carousel-style">
+/* Bigger vertical partner ad + rotating product gallery */
+.matrix-home-columns{
+  max-width:1580px!important;
+  grid-template-columns:minmax(0,1fr) clamp(300px,24vw,365px)!important;
+  gap:20px!important;
+}
+#shield-store-ad{padding:15px!important;border-radius:18px!important}
+.shield-ad-brand{margin-bottom:16px!important}
+.shield-ad-brand img{width:52px!important;height:52px!important}
+.shield-ad-brand-text strong{font-size:22px!important}
+.shield-ad-brand-text span{font-size:9px!important}
+.shield-ad-copy h3{font-size:23px!important}
+.shield-ad-copy p{font-size:12px!important}
+.shield-ad-visual{
+  height:clamp(300px,34vw,410px)!important;
+  margin:10px 0 9px!important;
+  background:radial-gradient(ellipse at 50% 40%,#3e6545 0%,#183321 52%,#061009 100%)!important;
+}
+#shield-ad-slideshow-image{
+  opacity:1;transition:opacity .32s ease,transform .32s ease!important;
+  object-fit:contain!important;object-position:center bottom!important;
+}
+#shield-ad-slideshow-image.is-changing{opacity:.12;transform:scale(.97)!important}
+.shield-ad-slide-arrow{
+  position:absolute!important;z-index:5!important;top:50%!important;transform:translateY(-50%)!important;
+  display:grid!important;place-items:center!important;width:34px!important;height:34px!important;
+  padding:0!important;border:1px solid #d7ffe0b0!important;border-radius:50%!important;
+  background:#031009c9!important;color:#f3fff5!important;font-size:24px!important;line-height:1!important;
+  cursor:pointer!important;backdrop-filter:blur(7px)!important;transition:background .2s,transform .2s!important;
+}
+.shield-ad-slide-arrow:hover{background:#2fd968!important;color:#041007!important}
+.shield-ad-slide-arrow.prev{left:9px!important}
+.shield-ad-slide-arrow.next{right:9px!important}
+.shield-ad-carousel-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 2px 12px;color:#b8cbbb;font-size:10px}
+.shield-ad-counter{font-weight:800;letter-spacing:1px;color:#e0ffe5;direction:ltr}
+.shield-ad-progress{height:3px;background:#25422e;border-radius:9px;overflow:hidden;flex:1}
+.shield-ad-progress span{display:block;height:100%;width:6.66%;background:#8afa9f;border-radius:9px;transition:width .3s ease}
+.shield-ad-cta{font-size:14px!important;padding:14px 16px!important}
+.shield-ad-benefits{font-size:10px!important;margin-top:13px!important}
+@media(max-width:1050px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 280px!important;gap:14px!important}
+ .shield-ad-visual{height:280px!important}
+ .shield-ad-copy h3{font-size:20px!important}
+}
+@media(max-width:800px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 205px!important;gap:10px!important}
+ #shield-store-ad{padding:10px!important}
+ .shield-ad-visual{height:230px!important}
+ .shield-ad-brand img{width:38px!important;height:38px!important}
+ .shield-ad-brand-text strong{font-size:16px!important;letter-spacing:2px!important}
+ .shield-ad-copy h3{font-size:16px!important}
+ .shield-ad-copy p{font-size:10px!important}
+ .shield-ad-slide-arrow{width:28px!important;height:28px!important;font-size:20px!important}
+}
+@media(max-width:560px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 128px!important;gap:7px!important}
+ .matrix-games-main .games-grid{grid-template-columns:minmax(0,1fr)!important}
+ #shield-store-ad{padding:7px!important;border-radius:11px!important}
+ .shield-ad-brand img{width:27px!important;height:27px!important}
+ .shield-ad-brand-text strong{font-size:11px!important;letter-spacing:1px!important}
+ .shield-ad-brand-text span{font-size:6px!important;letter-spacing:1px!important}
+ .shield-ad-copy h3{font-size:12px!important}
+ .shield-ad-copy p{font-size:8px!important;line-height:1.5!important}
+ .shield-ad-eyebrow{font-size:6px!important;letter-spacing:0!important}
+ .shield-ad-visual{height:150px!important;margin:5px 0!important}
+ .shield-ad-slide-arrow{width:23px!important;height:23px!important;font-size:16px!important}
+ .shield-ad-slide-arrow.prev{left:4px!important}.shield-ad-slide-arrow.next{right:4px!important}
+ .shield-ad-carousel-meta{font-size:8px!important;margin-bottom:8px!important;gap:4px!important}
+ .shield-ad-cta{font-size:9px!important;padding:8px 5px!important}
+ .shield-ad-cta span:last-child{display:none!important}
+ .shield-ad-benefits{display:none!important}
+}
+@media(max-width:380px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 108px!important;gap:6px!important}
+ .shield-ad-visual{height:126px!important}
+ .shield-ad-copy h3{font-size:11px!important}
+ .shield-ad-copy p{font-size:7px!important}
+}
+@media(prefers-reduced-motion:reduce){#shield-ad-slideshow-image,.shield-ad-progress span{transition:none!important}}
+</style>
+
 </head>
 
 <body id="top">
@@ -1114,10 +1196,11 @@ iframe{width:100%;height:100%;border:none}
                     <span class="shield-ad-chip">SHIELD COLLECTION</span>
                     <span class="shield-ad-orbit shield-ad-orbit-one"></span>
                     <span class="shield-ad-orbit shield-ad-orbit-two"></span>
-                    <img src="https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672802220.png" alt="">
+                    <img id="shield-ad-slideshow-image" src="https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672802220.png" alt="صور شنط Shield Bags تتبدل تلقائيًا" loading="eager"><button class="shield-ad-slide-arrow prev" type="button" aria-label="صورة الشنطة السابقة" onclick="event.preventDefault();event.stopPropagation();shieldAdChangeSlide(-1)">‹</button><button class="shield-ad-slide-arrow next" type="button" aria-label="صورة الشنطة التالية" onclick="event.preventDefault();event.stopPropagation();shieldAdChangeSlide(1)">›</button>
                     <span class="shield-ad-visual-caption">BAGS FOR EVERY DAY</span>
                 </div>
-                <div class="shield-ad-cta"><span>شوف الشنط</span><span aria-hidden="true">↗</span></div>
+                <div class="shield-ad-carousel-meta"><span id="shield-ad-slide-name">اكتشف كل التصميمات</span><span class="shield-ad-progress"><span id="shield-ad-progress-fill"></span></span><span class="shield-ad-counter" id="shield-ad-slide-counter">01 / 15</span></div>
+                <div class="shield-ad-cta><span>شوف الشنط</span><span aria-hidden="true">↗</span></div>
                 <div class="shield-ad-benefits"><span>🎒 اختيارات متنوعة</span><span>✨ تصفّح المتجر</span></div>
             </a>
         </aside>
@@ -4222,5 +4305,47 @@ if(firebaseReady){
         `عدد الألعاب: ${catalog.length} — وضع العرض المحلي فعال.`;
 }
 </script>
+
+<script id="shield-bags-ad-slideshow-script">
+(function(){
+ const images=["https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672226538.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672234943.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672238432.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672241645.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672296313.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672309875.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672321265.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672328540.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672335549.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672802220.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672804458.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672806551.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672808867.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672812749.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672815118.png"];
+ const image=document.getElementById('shield-ad-slideshow-image');
+ const counter=document.getElementById('shield-ad-slide-counter');
+ const progress=document.getElementById('shield-ad-progress-fill');
+ const label=document.getElementById('shield-ad-slide-name');
+ const ad=document.getElementById('shield-store-ad');
+ if(!image||!ad||!images.length)return;
+ let current=Math.max(0,images.indexOf(image.getAttribute('src')));
+ let timer=0;
+ const names=['شنط متنوعة','شنط أطفال','تصميمات ملونة','شنط مدرسية','شنط أبطال','شنط ظهر','تصميمات يومية'];
+ function show(index){
+   current=(index+images.length)%images.length;
+   image.classList.add('is-changing');
+   const next=new Image();
+   next.onload=function(){
+     image.src=images[current];
+     if(counter)counter.textContent=String(current+1).padStart(2,'0')+' / '+String(images.length).padStart(2,'0');
+     if(progress)progress.style.width=((current+1)/images.length*100)+'%';
+     if(label)label.textContent=names[current%names.length];
+     requestAnimationFrame(()=>requestAnimationFrame(()=>image.classList.remove('is-changing')));
+   };
+   next.onerror=function(){
+     image.classList.remove('is-changing');
+     if(counter)counter.textContent=String(current+1).padStart(2,'0')+' / '+String(images.length).padStart(2,'0');
+     if(progress)progress.style.width=((current+1)/images.length*100)+'%';
+   };
+   next.src=images[current];
+   if(next.complete&&next.naturalWidth)next.onload();
+ }
+ window.shieldAdChangeSlide=function(amount){show(current+Number(amount||0));restart()};
+ function restart(){if(timer)clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!ad.matches(':hover'))show(current+1)},3200)}
+ // Preload just the next image for smooth transitions without fetching the full gallery at once.
+ show(current);restart();
+ ad.addEventListener('focusin',()=>{if(timer)clearInterval(timer)});
+ ad.addEventListener('focusout',restart);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)restart()});
+})();
+</script>
+
 </body>
 </html>
