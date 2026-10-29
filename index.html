@@ -523,6 +523,107 @@ iframe{width:100%;height:100%;border:none}
 
 </style>
 
+<style id="shield-bags-ad-redesign">
+/* Premium vertical Shield Bags partner placement — keep it beside the game catalog */
+.matrix-home-columns{
+ width:100%!important;max-width:1450px!important;margin:0 auto!important;
+ display:grid!important;grid-template-columns:minmax(0,1fr) clamp(118px,21vw,270px)!important;
+ gap:clamp(8px,1.4vw,20px)!important;align-items:start!important;direction:ltr!important;
+}
+.matrix-games-main{grid-column:1!important;grid-row:1!important;min-width:0!important;direction:rtl!important}
+.matrix-games-main .home-sections,.matrix-games-main .games-grid{width:100%!important;max-width:100%!important;min-width:0!important}
+#shield-store-ad{
+ grid-column:2!important;grid-row:1!important;position:sticky!important;top:15px!important;
+ align-self:start!important;width:100%!important;min-width:0!important;
+ padding:12px!important;border-radius:16px!important;border:1px solid #8eeaa1!important;
+ background:linear-gradient(160deg,#14231b 0%,#07110c 42%,#030604 100%)!important;
+ box-shadow:0 10px 28px #0007,0 0 17px #1cfa5520!important;
+ text-align:right!important;overflow:hidden!important;isolation:isolate!important;
+}
+#shield-store-ad:before{
+ content:""!important;position:absolute!important;inset:0!important;z-index:-1!important;pointer-events:none!important;
+ opacity:1!important;background:radial-gradient(ellipse at 50% 38%,#1e5934a8 0%,transparent 60%),linear-gradient(155deg,transparent 35%,#0008 100%)!important;
+}
+.shield-ad-label{font-size:10px!important;color:#b7cabc!important;margin:0 1px 12px!important}
+.shield-ad-label-dot{color:#79ef99!important}
+.shield-ad-link{display:flex!important;flex-direction:column!important;gap:0!important;text-decoration:none!important;color:#f5fff6!important}
+.shield-ad-brand{display:flex!important;align-items:center!important;gap:8px!important;justify-content:flex-start!important;direction:ltr!important;margin:0 0 15px!important}
+.shield-ad-brand img{width:42px!important;height:42px!important;object-fit:contain!important;filter:drop-shadow(0 0 10px #83ffa522)!important}
+.shield-ad-brand-text{display:flex!important;flex-direction:column!important;align-items:flex-start!important;line-height:1!important}
+.shield-ad-brand-text strong{font-size:18px!important;letter-spacing:3px!important;color:#f7fff8!important}
+.shield-ad-brand-text span{font-size:8px!important;letter-spacing:2.6px!important;color:#a8d8b4!important;margin-top:5px!important}
+.shield-ad-copy{position:relative!important;z-index:2!important;margin:0 0 11px!important}
+.shield-ad-eyebrow{display:block!important;font-size:8px!important;letter-spacing:1px!important;color:#8beaa5!important;font-weight:800!important;margin-bottom:7px!important}
+.shield-ad-copy h3{font-size:19px!important;line-height:1.55!important;margin:0 0 5px!important;color:#fff!important;font-weight:900!important}
+.shield-ad-copy p{font-size:11px!important;line-height:1.8!important;color:#c1d6c6!important;margin:0!important}
+.shield-ad-visual{
+ height:clamp(205px,24vw,285px)!important;position:relative!important;overflow:hidden!important;
+ border:1px solid #52765c!important;border-radius:12px!important;margin:2px 0 12px!important;
+ background:radial-gradient(ellipse at 50% 48%,#2d4e36 0%,#14271a 54%,#07100a 100%)!important;
+ isolation:isolate!important;
+}
+.shield-ad-visual:after{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;background:linear-gradient(180deg,#07100a05 45%,#0205038c 100%)!important}
+.shield-ad-chip{position:absolute!important;z-index:3!important;top:9px!important;right:9px!important;border:1px solid #b7f9c4!important;border-radius:20px!important;background:#08170ce8!important;color:#e0ffe6!important;padding:5px 8px!important;font-size:9px!important}
+.shield-ad-orbit{border-color:#b5ffc420!important}
+.shield-ad-visual img{position:absolute!important;z-index:1!important;width:100%!important;height:96%!important;left:0!important;bottom:-2%!important;object-fit:contain!important;object-position:center bottom!important;filter:drop-shadow(0 14px 13px #0009)!important;transition:transform .25s ease!important}
+#shield-store-ad:hover .shield-ad-visual img{transform:translateY(-3px) scale(1.025)!important}
+.shield-ad-visual-caption{position:absolute!important;z-index:2!important;bottom:8px!important;left:9px!important;font-size:7px!important;letter-spacing:1.7px!important;color:#e4ffe9!important;text-shadow:0 2px 5px #000!important}
+.shield-ad-cta{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:9px!important;
+ background:linear-gradient(105deg,#b6f49a 0%,#69e889 100%)!important;color:#07140b!important;
+ border:1px solid #c5ffae!important;border-radius:7px!important;padding:12px 13px!important;
+ font-size:12px!important;font-weight:900!important;letter-spacing:.15px!important;
+ transition:transform .2s,box-shadow .2s!important;
+}
+#shield-store-ad:hover .shield-ad-cta{transform:translateY(-1px)!important;box-shadow:0 6px 18px #27ff6d23!important}
+.shield-ad-cta span:last-child{font-size:18px!important;line-height:1!important}
+.shield-ad-benefits{display:flex!important;justify-content:space-between!important;gap:5px!important;margin-top:12px!important;color:#adbfaf!important;font-size:9px!important;line-height:1.6!important}
+.shield-ad-benefits span{flex:1!important;text-align:center!important}
+@media(max-width:800px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 205px!important;gap:10px!important}
+ #shield-store-ad{position:sticky!important;top:10px!important;grid-column:2!important;grid-row:1!important;width:100%!important;margin:0!important;padding:10px!important}
+ .matrix-games-main{grid-column:1!important;grid-row:1!important}
+ .shield-ad-visual{height:190px!important}
+ .shield-ad-copy h3{font-size:17px!important}
+ .shield-ad-copy p{font-size:10px!important}
+ .shield-ad-brand{gap:6px!important;margin-bottom:12px!important}
+ .shield-ad-brand img{width:35px!important;height:35px!important}
+ .shield-ad-brand-text strong{font-size:15px!important;letter-spacing:2px!important}
+ .shield-ad-brand-text span{font-size:7px!important;letter-spacing:2px!important}
+}
+@media(max-width:560px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 128px!important;gap:7px!important}
+ .matrix-games-main .games-grid{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+ #shield-store-ad{padding:8px!important;border-radius:12px!important;top:8px!important}
+ .shield-ad-label{font-size:8px!important;margin-bottom:9px!important}
+ .shield-ad-brand{flex-direction:column!important;align-items:flex-start!important;gap:3px!important;margin-bottom:10px!important}
+ .shield-ad-brand img{width:28px!important;height:28px!important}
+ .shield-ad-brand-text strong{font-size:12px!important;letter-spacing:1.7px!important}
+ .shield-ad-brand-text span{font-size:6px!important;letter-spacing:1.5px!important;margin-top:3px!important}
+ .shield-ad-eyebrow{font-size:6px!important;letter-spacing:.3px!important;margin-bottom:4px!important}
+ .shield-ad-copy h3{font-size:13px!important;line-height:1.5!important;margin-bottom:4px!important}
+ .shield-ad-copy p{font-size:9px!important;line-height:1.6!important}
+ .shield-ad-visual{height:135px!important;margin:5px 0 8px!important;border-radius:8px!important}
+ .shield-ad-chip{font-size:7px!important;top:6px!important;right:5px!important;padding:4px 5px!important}
+ .shield-ad-orbit-one{width:130px!important;height:130px!important}
+ .shield-ad-orbit-two{width:100px!important;height:100px!important}
+ .shield-ad-visual-caption{font-size:5px!important;letter-spacing:1px!important;left:5px!important;bottom:5px!important}
+ .shield-ad-cta{font-size:10px!important;padding:9px 7px!important;justify-content:center!important}
+ .shield-ad-cta span:last-child{display:none!important}
+ .shield-ad-benefits{display:none!important}
+ .matrix-games-main .games-grid .game-card{min-width:0!important}
+}
+@media(max-width:380px){
+ .matrix-home-columns{grid-template-columns:minmax(0,1fr) 108px!important;gap:6px!important}
+ .matrix-games-main .games-grid{grid-template-columns:minmax(0,1fr)!important}
+ #shield-store-ad{padding:6px!important}
+ .shield-ad-copy h3{font-size:12px!important}
+ .shield-ad-copy p{font-size:8px!important}
+ .shield-ad-visual{height:115px!important}
+}
+@media(prefers-reduced-motion:reduce){#shield-store-ad *{transition:none!important}}
+</style>
+
 </head>
 
 <body id="top">
@@ -1007,16 +1108,16 @@ iframe{width:100%;height:100%;border:none}
                 <div class="shield-ad-copy">
                     <span class="shield-ad-eyebrow">STYLE • QUALITY • EVERYDAY</span>
                     <h3>شنط مميزة لكل يوم</h3>
-                    <p>اكتشف تشكيلات شنط المدارس والظهر واختر التصميم المناسب لك.</p>
+                    <p>شنط مدرسية وشنط ظهر بتصميمات متنوعة تناسب يومك.</p>
                 </div>
                 <div class="shield-ad-visual" aria-hidden="true">
-                    <span class="shield-ad-chip">اكتشف المجموعة</span>
+                    <span class="shield-ad-chip">SHIELD COLLECTION</span>
                     <span class="shield-ad-orbit shield-ad-orbit-one"></span>
                     <span class="shield-ad-orbit shield-ad-orbit-two"></span>
                     <img src="https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672802220.png" alt="">
                     <span class="shield-ad-visual-caption">BAGS FOR EVERY DAY</span>
                 </div>
-                <div class="shield-ad-cta"><span>تسوّق الآن</span><span aria-hidden="true">↗</span></div>
+                <div class="shield-ad-cta"><span>شوف الشنط</span><span aria-hidden="true">↗</span></div>
                 <div class="shield-ad-benefits"><span>🎒 اختيارات متنوعة</span><span>✨ تصفّح المتجر</span></div>
             </a>
         </aside>
