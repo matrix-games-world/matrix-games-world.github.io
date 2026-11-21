@@ -2201,7 +2201,7 @@ async function loadAllGameImagesOnce(){
         // First locate all administrator-uploaded game images by their source field
         // and resolve them by saved name as well as by document ID.
         try{
-            const snap=await db.collection("games").where("source","==","local").get();
+            const snap=await db.collection("games").get();
             snap.forEach(doc=>applyImageRecord(doc.id,doc.data()||{}));
             usedCollectionQuery=true;
         }catch(e){
