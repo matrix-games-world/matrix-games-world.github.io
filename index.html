@@ -3470,6 +3470,15 @@ function syncAuthControls(){
     });
 }
 
+function startGameImageLoading(){
+    // ابدأ تحميل الصور فورًا بعد رسم الكتالوج، دون انتظار تسجيل الدخول.
+    // الصور المحفوظة على الجهاز تظهر أولًا، ثم تحديث صور Firestore في الخلفية.
+    readCachedGameImages().then(()=>{
+        applyAllLoadedGameImages();
+    }).catch(e=>console.warn("Cached game images:",e));
+    loadAllGameImagesOnce();
+}
+
 async function loadUserProfile(user){
     currentUser=user;
     syncAuthControls();
@@ -3486,6 +3495,7 @@ async function loadUserProfile(user){
         document.getElementById("admin-panel").style.display="none";
         renderHomeSections();
         renderGames();
+        startGameImageLoading();
         return;
     }
 
@@ -3518,6 +3528,7 @@ async function loadUserProfile(user){
     await checkAdmin(user.uid);
     renderHomeSections();
     renderGames();
+    startGameImageLoading();
 }
 
 async function saveGameActivity(name){
