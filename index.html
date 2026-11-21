@@ -4331,6 +4331,27 @@ if(firebaseReady){
 }
 </script>
 
+
+<script id="matrix-games-render-recovery">
+// Emergency recovery: if startup rendering was interrupted, retry the local catalog without Firebase.
+(function(){
+ function recover(){
+  try{
+   const grid=document.getElementById('main-grid');
+   if(!grid || grid.querySelector('.game-card')) return true;
+   if(typeof gameFiles==='undefined' || !Array.isArray(gameFiles) || !gameFiles.length) return false;
+   if(typeof buildBaseCatalog==='function') buildBaseCatalog();
+   if(typeof renderCategoryBar==='function') renderCategoryBar();
+   if(typeof renderHomeSections==='function') renderHomeSections();
+   if(typeof renderGames==='function') renderGames(catalog);
+   return !!grid.querySelector('.game-card');
+  }catch(err){ console.warn('Matrix local game render recovery:',err); return false; }
+ }
+ let attempts=0;
+ function retry(){ if(recover() || attempts++>=12) return; setTimeout(retry,700); }
+ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',retry,{once:true}); else retry();
+})();
+</script>
 <script id="shield-bags-ad-slideshow-script">
 (function(){
  const images=["https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672226538.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672234943.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672238432.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672241645.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672296313.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672309875.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672321265.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672328540.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672335549.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672802220.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672804458.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672806551.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672808867.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672812749.png","https://matrix-games-world.github.io/shield-bags/assets/products/FB_IMG_1792672815118.png"];
